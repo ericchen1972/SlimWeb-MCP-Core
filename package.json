@@ -11,7 +11,8 @@
     "./resource-context": "./src/resourceContext.js"
   },
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "verify:consumers": "node scripts/verify-consumers.mjs"
   },
   "engines": {
     "node": ">=20"

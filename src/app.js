@@ -2829,7 +2829,8 @@ function sessionIdentity(session) {
     email: session.email,
     name: session.name,
     google_id: session.google_id,
-    site_id: session.site_id ?? null
+    site_id: session.site_id ?? null,
+    resource_context: session.resource_context ?? null
   };
 }
 
@@ -4798,7 +4799,10 @@ async function handleGoogleLogin(request, response, context) {
       requestResourceContext(request),
       profile
     );
-    const sites = await context.accountRepository.listAdminSitesForGoogleProfile(profile);
+    const sites = await context.accountRepository.listAdminSitesForGoogleProfile({
+      ...profile,
+      resource_context: resourceContext
+    });
 
     if (sites.length === 0) {
       const error = new Error('這個 Google 帳號沒有可使用 MCP 的後台 AI 助理權限。');
