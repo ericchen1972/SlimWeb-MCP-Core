@@ -49,7 +49,14 @@ test('default tool profile preserves the SaaS contract', async () => {
   const hash = createHash('sha256').update(JSON.stringify(tools)).digest('hex');
 
   assert.equal(tools.length, 125);
-  assert.equal(hash, 'd6de40eb08a55927c199ae1b227fc29b7bf4010e0bc70a87b14d4d3ed1be6871');
+  assert.equal(hash, 'e5e4c662fd241829f532d1a567987698ad6a16e22759dfdea6eeea6c44c7e95b');
+});
+
+test('SaaS settings schema does not advertise removed member verification writes', async () => {
+  const tools = await listTools();
+  const settings = tools.find((tool) => tool.name === 'slimweb_settings_update');
+
+  assert.equal(settings.inputSchema.properties.member_verification, undefined);
 });
 
 test('Standalone tool profile advertises exactly five tools', async () => {

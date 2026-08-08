@@ -1228,11 +1228,6 @@ const MCP_TOOLS = [
           description: 'Site display name. Renaming does not change the slug, site_code, callback code, or domain.'
         },
         site_status: { type: 'string', enum: ['active', 'maintenance'] },
-        member_verification: {
-          type: 'string',
-          enum: ['none', 'email'],
-          description: 'email requires complete SMTP settings first; configure them through slimweb_mail_delivery_settings_update before enabling email verification.'
-        },
         website_type: { type: 'string', enum: ['ecommerce', 'brand'] },
         default_country_code: { type: 'string', enum: ['TW', 'JP', 'KR', 'SG', 'HK', 'CN', 'US', 'CA', 'GB', 'AU'] },
         product_load_mode: { type: 'string', enum: ['pagination', 'dynamic'] },
