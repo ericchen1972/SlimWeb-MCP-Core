@@ -1,0 +1,20 @@
+{
+  "name": "@slimweb/mcp-core",
+  "version": "0.1.0",
+  "description": "Environment-neutral SlimWeb MCP protocol, OAuth, tool catalog, and orchestration core.",
+  "type": "module",
+  "main": "./src/app.js",
+  "exports": {
+    ".": "./src/app.js",
+    "./session": "./src/session.js",
+    "./tool-profile": "./src/toolProfile.js",
+    "./resource-context": "./src/resourceContext.js"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}
