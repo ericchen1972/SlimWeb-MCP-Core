@@ -8,7 +8,9 @@
     ".": "./src/app.js",
     "./session": "./src/session.js",
     "./tool-profile": "./src/toolProfile.js",
-    "./resource-context": "./src/resourceContext.js"
+    "./resource-context": "./src/resourceContext.js",
+    "./backend-repository": "./src/backendRepository.js",
+    "./capability-profile": "./src/capabilityProfile.js"
   },
   "scripts": {
     "test": "node --test",
