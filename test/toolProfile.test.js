@@ -20,11 +20,12 @@ const repository = {
   }
 };
 
-async function listTools(toolProfile = createToolProfile()) {
+async function listTools(toolProfile = createToolProfile(), toolProfileResolver = null) {
   const server = createServer(createRequestHandler({
     accountRepository: repository,
     sessionSecret: 'test-session-secret',
-    toolProfile
+    toolProfile,
+    toolProfileResolver
   }));
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 
@@ -83,4 +84,18 @@ test('filtered tools are rejected before dispatch', () => {
 
   assert.equal(profile.allows('slimweb_settings_update'), true);
   assert.equal(profile.allows('slimweb_orders_delete'), false);
+});
+
+test('tools list can resolve a profile for the current resource context', async () => {
+  const resolved = createToolProfile({ enabledTools: ['slimweb_auth_status'] });
+  const tools = await listTools(
+    createToolProfile({ enabledTools: STANDALONE_TOOLS }),
+    async ({ session, resourceContext }) => {
+      assert.equal(session, null);
+      assert.equal(resourceContext, null);
+      return resolved;
+    }
+  );
+
+  assert.deepEqual(tools.map(({ name }) => name), ['slimweb_auth_status']);
 });

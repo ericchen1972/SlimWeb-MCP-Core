@@ -2829,8 +2829,22 @@ function sessionIdentity(session) {
   };
 }
 
-async function toolsForSession(session, context) {
-  const profiledTools = context.toolProfile.apply(MCP_TOOLS);
+async function toolProfileForSession(session, context, request) {
+  if (typeof context.toolProfileResolver !== 'function') {
+    return context.toolProfile;
+  }
+
+  const resolved = await context.toolProfileResolver({
+    session,
+    identity: session ? sessionIdentity(session) : null,
+    resourceContext: request?.slimwebResourceContext ?? null
+  });
+  return resolved ?? context.toolProfile;
+}
+
+async function toolsForSession(session, context, request) {
+  const toolProfile = await toolProfileForSession(session, context, request);
+  const profiledTools = toolProfile.apply(MCP_TOOLS);
   if (!session) {
     return profiledTools.map(publicTool);
   }
@@ -2905,7 +2919,8 @@ async function toolResultForCall(message, request, context) {
     });
   }
 
-  if (!context.toolProfile.allows(name)) {
+  const toolProfile = await toolProfileForSession(session, context, request);
+  if (!toolProfile.allows(name)) {
     return mcpError(message?.id ?? null, -32601, `Unknown MCP tool: ${name ?? 'undefined'}`);
   }
 
@@ -4326,7 +4341,8 @@ async function handleMcpMessage(message, request, context) {
       return mcpResult(id, {
         tools: await toolsForSession(
           verifySessionToken(readSessionToken(request), context.sessionSecret),
-          context
+          context,
+          request
         )
       });
 
@@ -4909,6 +4925,7 @@ function createDefaultContext(options = {}) {
     googleVerifier: options.googleVerifier ?? new GoogleIdentityVerifier(options),
     accountRepository: options.accountRepository,
     toolProfile: options.toolProfile ?? createToolProfile(),
+    toolProfileResolver: options.toolProfileResolver ?? null,
     resourceContext: options.resourceContext ?? createNullResourceContext(),
     sessionSecret: options.sessionSecret ?? process.env.MCP_SESSION_SECRET,
     publicBaseUrl: options.publicBaseUrl ?? process.env.PUBLIC_BASE_URL ?? '',
