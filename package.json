@@ -1,6 +1,6 @@
 {
   "name": "@slimweb/mcp-core",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Environment-neutral SlimWeb MCP protocol, OAuth, tool catalog, and orchestration core.",
   "type": "module",
   "main": "./src/app.js",
