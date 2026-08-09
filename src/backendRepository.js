@@ -69,20 +69,24 @@ export class SlimWebBackendRepository {
       body: selector
     });
 
-    return {
+    const resolved = {
       ...identity,
       ...data.actor,
       site: data.site
     };
+    if (Array.isArray(data.themes)) resolved.themes = data.themes;
+    return resolved;
   }
 
   async selectSiteForAdminIdentity(identity, args) {
     const actor = await this.resolveAdminSiteForIdentity(identity, args);
-    const data = await this.request(this.sitePath(actor, '/themes?include_default=1'), {
-      identity: actor,
-      tool: 'slimweb_site_select',
-      permission: 'page_management_templates'
-    });
+    const data = Array.isArray(actor.themes)
+      ? { themes: actor.themes }
+      : await this.request(this.sitePath(actor, '/themes?include_default=1'), {
+          identity: actor,
+          tool: 'slimweb_site_select',
+          permission: 'page_management_templates'
+        });
 
     return {
       selected_site: actor.site,
@@ -956,5 +960,4 @@ export function assertSlimWebBackend(backend) {
 
   return backend;
 }
-
 
