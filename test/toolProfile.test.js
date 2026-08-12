@@ -50,7 +50,7 @@ test('default tool profile preserves the SaaS contract', async () => {
   const hash = createHash('sha256').update(JSON.stringify(tools)).digest('hex');
 
   assert.equal(tools.length, 125);
-  assert.equal(hash, 'e5e4c662fd241829f532d1a567987698ad6a16e22759dfdea6eeea6c44c7e95b');
+  assert.equal(hash, '9f63fb8ca81bc464b816f7d441efd08bb9f687947e954582108627a5f104808e');
 });
 
 test('SaaS settings schema does not advertise removed member verification writes', async () => {
@@ -58,6 +58,18 @@ test('SaaS settings schema does not advertise removed member verification writes
   const settings = tools.find((tool) => tool.name === 'slimweb_settings_update');
 
   assert.equal(settings.inputSchema.properties.member_verification, undefined);
+});
+
+test('Theme tools advertise wide-desktop and viewport-overlay safety checks', async () => {
+  const tools = await listTools();
+  const context = tools.find((tool) => tool.name === 'slimweb_theme_shell_get_context');
+  const update = tools.find((tool) => tool.name === 'slimweb_themes_update_root_elements');
+
+  assert.match(context.description, /1536.*1800/);
+  assert.match(context.description, /backdrop-filter.*filter.*transform.*contain.*perspective/i);
+  assert.match(context.description, /overlay.*viewport-bound/i);
+  assert.match(update.description, /same row.*header height/i);
+  assert.match(update.description, /viewport-bound auth.*mobile-menu.*cart overlays/i);
 });
 
 test('Standalone tool profile advertises exactly five tools', async () => {
