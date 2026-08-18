@@ -946,7 +946,7 @@ const MCP_TOOLS = [
   },
   {
     name: 'slimweb_mail_delivery_settings_get',
-    description: 'Read SlimWeb mail delivery settings, including SMTP server fields and order/reminder notification options shown in the admin mail settings page.',
+    description: 'Read SlimWeb mail delivery settings, including SMTP server fields, mail server availability, AI marketing email settings, and order/reminder notification options shown in the admin mail settings page.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -957,7 +957,7 @@ const MCP_TOOLS = [
   },
   {
     name: 'slimweb_mail_delivery_settings_update',
-    description: 'Update SlimWeb mail delivery settings, including SMTP server fields and order/reminder notification options shown in the admin mail settings page.',
+    description: 'Update SlimWeb mail delivery settings shown in the admin mail settings page. SMTP fields must be all blank or fully configured; AI marketing email interval must be at least 7 days.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -971,7 +971,13 @@ const MCP_TOOLS = [
         notification_smtp_password: { type: 'string' },
         notification_smtp_port: { type: ['string', 'integer'] },
         notification_smtp_from_email: { type: 'string' },
-        notification_smtp_ssl: { type: 'boolean' }
+        notification_smtp_ssl: { type: 'boolean' },
+        use_ai_marketing_email: { type: 'boolean' },
+        ai_marketing_email_interval_days: {
+          type: 'integer',
+          minimum: 7,
+          description: 'Minimum 7 days. This only stores the setting; automated AI marketing delivery is not enabled by this field alone.'
+        }
       },
       required: ['site_id']
     }

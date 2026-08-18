@@ -50,7 +50,7 @@ test('default tool profile preserves the SaaS contract', async () => {
   const hash = createHash('sha256').update(JSON.stringify(tools)).digest('hex');
 
   assert.equal(tools.length, 125);
-  assert.equal(hash, '9f63fb8ca81bc464b816f7d441efd08bb9f687947e954582108627a5f104808e');
+  assert.equal(hash, '158cdf30821435d4d3348b5eb9e30f42184bdaf12adb780c6eb1317e677e6ea4');
 });
 
 test('SaaS settings schema does not advertise removed member verification writes', async () => {
@@ -58,6 +58,17 @@ test('SaaS settings schema does not advertise removed member verification writes
   const settings = tools.find((tool) => tool.name === 'slimweb_settings_update');
 
   assert.equal(settings.inputSchema.properties.member_verification, undefined);
+});
+
+test('mail delivery schema exposes SMTP availability context and AI marketing settings', async () => {
+  const tools = await listTools();
+  const read = tools.find((tool) => tool.name === 'slimweb_mail_delivery_settings_get');
+  const update = tools.find((tool) => tool.name === 'slimweb_mail_delivery_settings_update');
+
+  assert.match(read.description, /mail server availability/i);
+  assert.equal(update.inputSchema.properties.use_ai_marketing_email.type, 'boolean');
+  assert.equal(update.inputSchema.properties.ai_marketing_email_interval_days.type, 'integer');
+  assert.equal(update.inputSchema.properties.ai_marketing_email_interval_days.minimum, 7);
 });
 
 test('Theme tools advertise wide-desktop and viewport-overlay safety checks', async () => {
