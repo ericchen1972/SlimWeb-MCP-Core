@@ -199,6 +199,10 @@ export class SlimWebBackendRepository {
     return this.operationalMutation(actor, `/operations/admins/${this.requiredId(adminId, 'admin_id')}`, 'slimweb_admins_delete', 'system_admin', body, 'DELETE');
   }
 
+  async sendMemberEmail(actor, args) {
+    return this.operationalMutation(actor, '/communications/member-email', 'slimweb_member_email_send', 'member_management', args, 'POST');
+  }
+
   async createNewsletter(actor, args) {
     return this.operationalMutation(actor, '/communications/newsletters', 'slimweb_newsletters_create', 'newsletter_management', args, 'POST');
   }
@@ -960,4 +964,3 @@ export function assertSlimWebBackend(backend) {
 
   return backend;
 }
-

@@ -49,8 +49,19 @@ test('default tool profile preserves the SaaS contract', async () => {
   const tools = await listTools();
   const hash = createHash('sha256').update(JSON.stringify(tools)).digest('hex');
 
-  assert.equal(tools.length, 125);
-  assert.equal(hash, '158cdf30821435d4d3348b5eb9e30f42184bdaf12adb780c6eb1317e677e6ea4');
+  assert.equal(tools.length, 127);
+  assert.equal(hash, 'bb86586ea1668d4da1863a737272e6b581bbb0529e24c8717b182409253124a8');
+});
+
+test('member email is synchronous and newsletters have no recipient selector', async () => {
+  const tools = await listTools();
+  const send = tools.find((tool) => tool.name === 'slimweb_member_email_send');
+  const createNewsletter = tools.find((tool) => tool.name === 'slimweb_newsletters_create');
+
+  assert.deepEqual(send.inputSchema.required, ['site_code', 'member_ids', 'subject', 'rendered_html']);
+  assert.equal(send.inputSchema.properties.cc_emails.maxItems, 5);
+  assert.equal(createNewsletter.inputSchema.properties.recipient_scope, undefined);
+  assert.equal(createNewsletter.inputSchema.properties.member_emails, undefined);
 });
 
 test('SaaS settings schema does not advertise removed member verification writes', async () => {

@@ -496,8 +496,8 @@ const MCP_PARITY_TOOLS = [
   ['slimweb_members_delete', 'Delete one storefront member by stable member_id.', { member_id: { type: 'integer' } }, ['member_id']],
   ['slimweb_members_coupons_revoke', 'Revoke one issued member coupon. This matches Web admin delete behavior without erasing its history.', { member_id: { type: 'integer' }, member_coupon_id: { type: 'integer' } }, ['member_id', 'member_coupon_id']],
   ['slimweb_newsletters_list', 'List existing newsletter records so the AI can select a stable newsletter_id.', { page: { type: 'integer' }, per_page: { type: 'integer' } }],
-  ['slimweb_newsletters_get', 'Read one existing newsletter and its selected recipients.', { newsletter_id: { type: 'integer' } }, ['newsletter_id']],
-  ['slimweb_newsletters_update', 'Patch one existing newsletter. Omitted content and scheduling fields remain unchanged.', { newsletter_id: { type: 'integer' }, recipient_scope: { type: 'string', enum: ['members', 'all_members'] }, title: { type: 'string' }, html_content: { type: 'string' }, scheduled_at: { type: 'string' } }, ['newsletter_id']],
+  ['slimweb_newsletters_get', 'Read one existing newsletter. Newsletters always target all currently active members at send time and do not store recipient rows.', { newsletter_id: { type: 'integer' } }, ['newsletter_id']],
+  ['slimweb_newsletters_update', 'Patch one existing all-member newsletter. Omitted content and scheduling fields remain unchanged.', { newsletter_id: { type: 'integer' }, title: { type: 'string' }, html_content: { type: 'string' }, scheduled_at: { type: 'string' } }, ['newsletter_id']],
   ['slimweb_newsletters_delete', 'Delete one existing newsletter by stable newsletter_id.', { newsletter_id: { type: 'integer' } }, ['newsletter_id']],
   ['slimweb_discount_codes_delete', 'Delete one discount code by stable discount_code_id.', { discount_code_id: { type: 'integer' } }, ['discount_code_id']],
   ['slimweb_member_tiers_delete', 'Delete one member tier by stable member_tier_id.', { member_tier_id: { type: 'integer' } }, ['member_tier_id']],
@@ -1955,28 +1955,50 @@ const MCP_TOOLS = [
 	    }
 	  },
     {
-      name: 'slimweb_newsletters_create',
-      description: 'Create a SlimWeb newsletter record for all members or selected members. This tool stores the newsletter for Webless admin scheduling and does not send email directly. If scheduled_at is omitted, SlimWeb-MCP sets it to the current time plus 5 minutes.',
+      name: 'slimweb_member_email_preview',
+      description: 'Preview one non-marketing operational email before sending it to selected members. This does not send or queue email. After the user approves the preview, call slimweb_member_email_send with the same recipient and content fields.',
       inputSchema: {
         type: 'object',
         properties: {
           site_id: { type: 'integer' },
-          recipient_scope: {
-            type: 'string',
-            enum: ['members', 'all_members'],
-            description: 'Use members for explicit named recipients. Use all_members only when the user clearly asked to create a newsletter for every member.'
-          },
+          member_ids: { type: 'array', items: { type: 'integer' }, minItems: 1, maxItems: 5, description: 'Active member IDs used as To recipients.' },
+          cc_emails: { type: 'array', items: { type: 'string', format: 'email' }, maxItems: 5, description: 'Optional arbitrary valid CC addresses.' },
+          bcc_emails: { type: 'array', items: { type: 'string', format: 'email' }, maxItems: 5, description: 'Optional arbitrary valid BCC addresses. To, CC, and BCC combined may contain at most five unique addresses.' },
+          subject: { type: 'string', maxLength: 255 },
+          rendered_html: { type: 'string', description: 'Operational email HTML body; do not use this tool for marketing or all-member mail.' }
+        },
+        required: ['site_id', 'member_ids', 'subject', 'rendered_html']
+      },
+      _meta: {
+        ui: { resourceUri: MEMBER_EMAIL_PREVIEW_WIDGET_URI, visibility: ['model', 'app'] },
+        'openai/outputTemplate': MEMBER_EMAIL_PREVIEW_WIDGET_URI,
+        'openai/widgetAccessible': true
+      }
+    },
+    {
+      name: 'slimweb_member_email_send',
+      description: 'Synchronously send one non-marketing operational email to selected active members, with optional arbitrary CC and BCC addresses. To, CC, and BCC are deduplicated together and limited to five unique addresses. This never creates a newsletter or queue job. SMTP errors may identify the address rejected during the SMTP transaction, but delayed bounce results are unavailable.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          site_id: { type: 'integer' },
+          member_ids: { type: 'array', items: { type: 'integer' }, minItems: 1, maxItems: 5 },
+          cc_emails: { type: 'array', items: { type: 'string', format: 'email' }, maxItems: 5 },
+          bcc_emails: { type: 'array', items: { type: 'string', format: 'email' }, maxItems: 5 },
+          subject: { type: 'string', maxLength: 255 },
+          rendered_html: { type: 'string' }
+        },
+        required: ['site_id', 'member_ids', 'subject', 'rendered_html']
+      }
+    },
+    {
+      name: 'slimweb_newsletters_create',
+      description: 'Create a scheduled SlimWeb newsletter for all active members. This stores no recipient rows and does not send email directly. At the scheduled time SlimWeb queries the current active-member emails. If scheduled_at is omitted, SlimWeb-MCP sets it to the current time plus 5 minutes.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          site_id: { type: 'integer' },
           title: { type: 'string' },
-          member_names: {
-            type: 'array',
-            items: { type: 'string' },
-            description: 'Optional recipient names. When only names are provided, SlimWeb-MCP looks up members one by one and may return candidate emails when a name matches multiple members.'
-          },
-          member_emails: {
-            type: 'array',
-            items: { type: 'string' },
-            description: 'Optional recipient emails. When member_names and member_emails are both provided with the same length, the tool stores the newsletter recipients directly without member lookup.'
-          },
           html_content: {
             type: 'string',
             description: 'AI-composed HTML body. script, iframe, and inline event handlers are rejected/removed before storing.'
@@ -1986,7 +2008,7 @@ const MCP_TOOLS = [
             description: 'Optional future date or datetime. Omit when the user did not specify a send time; SlimWeb-MCP will use now + 5 minutes.'
           }
         },
-        required: ['site_id', 'recipient_scope', 'title', 'html_content']
+        required: ['site_id', 'title', 'html_content']
       }
     },
     {
@@ -2786,6 +2808,8 @@ const TOOL_PERMISSION_RULES = {
   slimweb_members_coupons_issue: ['discount_management', 'coupon_templates'],
   slimweb_members_list: ['member_management', 'member_list'],
   slimweb_members_get: ['member_management', 'member_list'],
+  slimweb_member_email_preview: ['member_management', 'member_list'],
+  slimweb_member_email_send: ['member_management', 'member_list'],
   slimweb_newsletters_create: ['member_management', 'member_list'],
   slimweb_posters_create: ['product_management', 'product_management_products'],
   slimweb_discount_codes_list: ['discount_management', 'discount_codes'],
@@ -3988,6 +4012,44 @@ async function toolResultForCall(message, request, context) {
 	        return toolExceptionToMcpError(message?.id ?? null, error);
 	      }
 	    }
+
+      case 'slimweb_member_email_preview': {
+        try {
+          const args = toolArgs(message);
+          await actorForTool(session, name, args, context);
+          const result = {
+            subject: String(args.subject ?? ''),
+            preview_html: String(args.rendered_html ?? ''),
+            member_ids: args.member_ids ?? [],
+            cc_emails: args.cc_emails ?? [],
+            bcc_emails: args.bcc_emails ?? [],
+            sends_email: false
+          };
+          return mcpResult(message.id ?? null, {
+            structuredContent: result,
+            content: [{ type: 'text', text: `Email preview ready for ${result.member_ids.length} selected member(s). No email was sent.` }],
+            _meta: {
+              ui: { resourceUri: MEMBER_EMAIL_PREVIEW_WIDGET_URI, visibility: ['model', 'app'] },
+              'openai/outputTemplate': MEMBER_EMAIL_PREVIEW_WIDGET_URI,
+              'openai/widgetAccessible': true
+            }
+          });
+        } catch (error) {
+          return toolExceptionToMcpError(message?.id ?? null, error);
+        }
+      }
+
+      case 'slimweb_member_email_send': {
+        try {
+          const result = await context.accountRepository.sendMemberEmail(
+            await actorForTool(session, name, toolArgs(message), context),
+            toolArgs(message)
+          );
+          return mcpResult(message.id ?? null, mcpJsonContent(result));
+        } catch (error) {
+          return toolExceptionToMcpError(message?.id ?? null, error);
+        }
+      }
 
       case 'slimweb_newsletters_create': {
         try {

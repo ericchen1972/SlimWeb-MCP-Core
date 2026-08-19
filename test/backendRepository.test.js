@@ -90,6 +90,37 @@ test('backend repository maps Batch 1 mutations without site selectors', async (
   ]);
 });
 
+test('backend repository sends one synchronous member email with explicit cc and bcc', async () => {
+  const { requests, transport } = transportRecorder(() => ({ sent: true, recipient_count: 3 }));
+  const repository = new SlimWebBackendRepository({ transport, idempotencyKeyFactory: () => 'member-email-idempotency-001' });
+
+  const result = await repository.sendMemberEmail(actor, {
+    site_id: 101,
+    member_ids: [7],
+    cc_emails: ['copy@example.com'],
+    bcc_emails: ['hidden@example.com'],
+    subject: 'Order changed',
+    rendered_html: '<p>Please wait two days.</p>'
+  });
+
+  assert.equal(result.sent, true);
+  assert.deepEqual(requests[0], {
+    method: 'POST',
+    path: '/internal/mcp/v1/sites/swcb_demo/communications/member-email',
+    identity: actor,
+    tool: 'slimweb_member_email_send',
+    permission: 'member_management',
+    body: {
+      member_ids: [7],
+      cc_emails: ['copy@example.com'],
+      bcc_emails: ['hidden@example.com'],
+      subject: 'Order changed',
+      rendered_html: '<p>Please wait two days.</p>'
+    },
+    idempotencyKey: 'member-email-idempotency-001'
+  });
+});
+
 test('backend repository requires one injected transport', () => {
   assert.throws(
     () => new SlimWebBackendRepository(),
