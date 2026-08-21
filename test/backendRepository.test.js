@@ -127,3 +127,37 @@ test('backend repository requires one injected transport', () => {
     /transport with request\(\) is required/i
   );
 });
+
+test('theme repository clones only explicit custom sources and blocks literal Default writes', async () => {
+  const { requests, transport } = transportRecorder(() => ({ ok: true }));
+  const repository = new SlimWebBackendRepository({
+    transport,
+    idempotencyKeyFactory: () => 'theme-idempotency-001'
+  });
+
+  await repository.createThemeFromTheme(actor, {
+    site_code: 'swcb_demo',
+    source_theme_id: 44,
+    name: 'Next theme'
+  });
+
+  assert.deepEqual(requests[0], {
+    method: 'POST',
+    path: '/internal/mcp/v1/sites/swcb_demo/themes',
+    identity: actor,
+    tool: 'slimweb_themes_create_from_theme',
+    permission: 'page_management_templates',
+    idempotencyKey: 'theme-idempotency-001',
+    body: { source_theme_id: 44, name: 'Next theme' }
+  });
+
+  for (const call of [
+    () => repository.updateThemeRootElements(actor, { theme_id: 'default', fragments: { footer: '<footer />' } }),
+    () => repository.upsertThemeStyleProfile(actor, { theme_id: 'DEFAULT', summary: 'Nope' }),
+    () => repository.appendThemeStyleProfileRequest(actor, { theme_id: 'default', request: 'Nope' })
+  ]) {
+    await assert.rejects(call, /Default theme is immutable/i);
+  }
+
+  assert.equal(requests.length, 1);
+});

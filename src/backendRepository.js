@@ -486,6 +486,10 @@ export class SlimWebBackendRepository {
     return this.themeMutation(actor, '/themes', 'POST', 'slimweb_themes_create_from_default', args);
   }
 
+  async createThemeFromTheme(actor, args) {
+    return this.themeMutation(actor, '/themes', 'POST', 'slimweb_themes_create_from_theme', args);
+  }
+
   async activateTheme(actor, args) {
     return this.themeMutation(actor, `/themes/${this.themeId(args)}/activate`, 'POST', 'slimweb_themes_activate', {});
   }
@@ -499,7 +503,7 @@ export class SlimWebBackendRepository {
   }
 
   async updateThemeRootElements(actor, args) {
-    return this.themeMutation(actor, `/themes/${this.themeId(args)}/root-elements`, 'PUT', 'slimweb_themes_update_root_elements', args);
+    return this.themeMutation(actor, `/themes/${this.mutableThemeId(args)}/root-elements`, 'PUT', 'slimweb_themes_update_root_elements', args);
   }
 
   async getThemeStyleProfile(actor, args) {
@@ -507,11 +511,11 @@ export class SlimWebBackendRepository {
   }
 
   async upsertThemeStyleProfile(actor, args) {
-    return this.themeMutation(actor, `/themes/${this.themeId(args)}/style-profile`, 'PUT', 'slimweb_theme_style_profile_upsert', args);
+    return this.themeMutation(actor, `/themes/${this.mutableThemeId(args)}/style-profile`, 'PUT', 'slimweb_theme_style_profile_upsert', args);
   }
 
   async appendThemeStyleProfileRequest(actor, args) {
-    return this.themeMutation(actor, `/themes/${this.themeId(args)}/style-profile/requests`, 'POST', 'slimweb_theme_style_profile_append_request', args);
+    return this.themeMutation(actor, `/themes/${this.mutableThemeId(args)}/style-profile/requests`, 'POST', 'slimweb_theme_style_profile_append_request', args);
   }
 
   async themeMutation(actor, suffix, method, tool, args) {
@@ -524,6 +528,14 @@ export class SlimWebBackendRepository {
     const value = typeof args?.theme_id === 'object' && args.theme_id !== null ? args.theme_id.id : args?.theme_id;
     if (String(value).toLowerCase() === 'default') return 'default';
     return String(this.requiredId(value, 'theme_id'));
+  }
+
+  mutableThemeId(args) {
+    const id = this.themeId(args);
+    if (id === 'default') {
+      throw new BackendError('Default theme is immutable. Create a new theme before changing theme-managed elements.', { code: 'DEFAULT_THEME_IMMUTABLE' });
+    }
+    return id;
   }
 
   async getMediaLibraryStats(actor, args) {

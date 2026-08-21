@@ -49,8 +49,8 @@ test('default tool profile preserves the SaaS contract', async () => {
   const tools = await listTools();
   const hash = createHash('sha256').update(JSON.stringify(tools)).digest('hex');
 
-  assert.equal(tools.length, 127);
-  assert.equal(hash, 'bb86586ea1668d4da1863a737272e6b581bbb0529e24c8717b182409253124a8');
+  assert.equal(tools.length, 128);
+  assert.equal(hash, '65a80a13c9945173f0b8169d3a4e02e5ef80524d4c67021ad67ddc8906a97eed');
 });
 
 test('member email is synchronous and newsletters have no recipient selector', async () => {
@@ -84,14 +84,27 @@ test('mail delivery schema exposes SMTP availability context and AI marketing se
 
 test('Theme tools advertise wide-desktop and viewport-overlay safety checks', async () => {
   const tools = await listTools();
+  const createDefault = tools.find((tool) => tool.name === 'slimweb_themes_create_from_default');
+  const clone = tools.find((tool) => tool.name === 'slimweb_themes_create_from_theme');
   const context = tools.find((tool) => tool.name === 'slimweb_theme_shell_get_context');
   const update = tools.find((tool) => tool.name === 'slimweb_themes_update_root_elements');
+  const upsert = tools.find((tool) => tool.name === 'slimweb_theme_style_profile_upsert');
+  const append = tools.find((tool) => tool.name === 'slimweb_theme_style_profile_append_request');
 
+  assert.match(createDefault.description, /does not copy.*Default.*root/i);
+  assert.deepEqual(clone.inputSchema.required, ['site_code', 'source_theme_id', 'name']);
+  assert.equal(clone.inputSchema.properties.source_theme_id.type, 'integer');
+  assert.match(clone.description, /non-Default/i);
   assert.match(context.description, /1536.*1800/);
   assert.match(context.description, /backdrop-filter.*filter.*transform.*contain.*perspective/i);
   assert.match(context.description, /overlay.*viewport-bound/i);
   assert.match(update.description, /same row.*header height/i);
   assert.match(update.description, /viewport-bound auth.*mobile-menu.*cart overlays/i);
+  assert.equal(update.inputSchema.properties.confirmed_active_theme_edit.type, 'boolean');
+  assert.equal(upsert.inputSchema.properties.confirmed_active_theme_edit.type, 'boolean');
+  assert.equal(append.inputSchema.properties.confirmed_active_theme_edit.type, 'boolean');
+  assert.match(update.description, /Default.*immutable/i);
+  assert.match(update.description, /active custom.*explicit confirmation/i);
 });
 
 test('Standalone tool profile advertises exactly five tools', async () => {
