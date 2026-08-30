@@ -27,8 +27,8 @@ const MCP_SERVER_GUIDELINES = [
 'Image rules: if a task needs image assets, obtain usable image URLs or media paths before creating or editing pages or articles. Publicly reachable image URLs may be used directly. Clients that can read local bytes and upload must use slimweb_uploads_create plus slimweb_uploads_commit. Clients that cannot upload bytes but have a ChatGPT conversation image attachment must use slimweb_images_import_chatgpt_attachment. If the client cannot upload and the user has not provided an attachment or image URL, stop and ask the user to paste or upload the image. When generating images, use the current design context colors and direction. If an image is AI-generated in a client that cannot upload it, stop and ask the user to paste the generated image back into the conversation.',
 'Product image reference rule: when ChatGPT needs to see an existing product image before editing, extending, judging, or generating related images, first read the product with slimweb_products_get, then call slimweb_product_image_reference_prepare with the image_url or media_path returned by the product tool. This tool is for ChatGPT clients that need an image reference bridge; Codex, Hermes, and other clients that can directly fetch image bytes may inspect the image in their own runtime instead. If ChatGPT cannot use the returned reference as visual context for image editing, ask the user to paste or upload the product image.',
 'Content SEO/AEO/GEO rule: after creating or editing a page or article, generate content-level SEO/AEO/GEO metadata from the actual title, body, topic, and images, then call slimweb_content_seo_update with workflow_context page_create, page_update, article_create, or article_update. Skip this only when the user explicitly says not to update SEO. Never use slimweb_content_seo_update as a standalone tool, and never use slimweb_seo_settings_update for single-page or single-article SEO.',
-'Page create flow: require a title, call slimweb_pages_check_title, stop on duplicate titles including fixed-page English aliases, call slimweb_design_context_get, follow the image rules for any page images, design from the site summary, colors, and framework, build single-page HTML with custom CSS and page-scoped inline JavaScript when useful, choose enabled_libraries from animate_css, aos, swiper, gsap, scrolltrigger, and scrollsmoother only when the user need calls for them, pass enabled_libraries as a required array using [] when no external support is used, call slimweb_pages_create, call slimweb_content_seo_update with workflow_context page_create unless the user explicitly opted out of SEO, and return the page URL; use slimweb_preview_get_page_url for preview verification.',
-'Page edit flow: require page_name, call slimweb_pages_get_content, stop if the editable page does not exist, follow the image rules for added or replacement images, call slimweb_design_context_get, modify the returned single-page HTML from the current content and design context, preserve or adjust enabled_libraries based on the updated page behavior, pass enabled_libraries as a required array using [] when no external support is used, call slimweb_pages_update, call slimweb_content_seo_update with workflow_context page_update unless the user explicitly opted out of SEO, and return the page URL; the homepage index is editable through this flow, but other fixed system pages are not editable; use slimweb_preview_get_page_url for preview verification.',
+'Page create flow: require a title, call slimweb_pages_check_title, stop on duplicate titles including fixed-page English aliases, call slimweb_design_context_get, follow the image rules for any page images, design from the site summary, colors, and framework, put non-executable page HTML and CSS in content.html, put the complete page behavior source without script tags in content.javascript, choose enabled_libraries from animate_css, aos, swiper, gsap, scrolltrigger, and scrollsmoother only when needed, pass enabled_libraries as a required array using [] when no external support is used, call slimweb_pages_create, call slimweb_content_seo_update with workflow_context page_create unless the user explicitly opted out of SEO, and return the page URL; use slimweb_preview_get_page_url for preview verification.',
+'Page edit flow: require page_name, call slimweb_pages_get_content, stop if the editable page does not exist, follow the image rules for added or replacement images, call slimweb_design_context_get, modify the returned HTML and complete content.javascript source from the current content and design context, omit content.javascript only when intentionally preserving the existing behavior and send an empty string only when intentionally deleting it, preserve or adjust enabled_libraries based on the updated page behavior, pass enabled_libraries as a required array using [] when no external support is used, call slimweb_pages_update, call slimweb_content_seo_update with workflow_context page_update unless the user explicitly opted out of SEO, and return the page URL; the homepage index is editable through this flow, but other fixed system pages are not editable; use slimweb_preview_get_page_url for preview verification.',
 'Article create flow: require a title, call slimweb_articles_check_title, stop on duplicate titles, call slimweb_design_context_get, require a 16:9 cover image and follow the image rules, generate the cover from article title or content if the user gave no image direction, follow the image rules for optional content images, do not repeat the article title as an h1 in content_html, call slimweb_articles_create, call slimweb_content_seo_update with workflow_context article_create unless the user explicitly opted out of SEO, and return the article URL.',
 'Article edit flow: require article_id or an article title; if the user provides a title, call slimweb_articles_list and match the target title to an article_id, stopping if none or multiple similar matches are found. Call slimweb_articles_get_content, stop if the article does not exist, call slimweb_design_context_get, follow the image rules for added or replacement cover/content images, modify content_html from the current article and design context, call slimweb_articles_check_title before changing the title and stop on duplicates, do not repeat the article title as an h1, call slimweb_articles_update, call slimweb_content_seo_update with workflow_context article_update unless the user explicitly opted out of SEO, and return the article URL.',
 'Article delete flow: resolve one stable article_id with slimweb_articles_list or slimweb_articles_get_content, then call slimweb_articles_delete. Do not guess among similar titles.',
@@ -268,7 +268,22 @@ const SITE_CODE_SCHEMA = {
 };
 const PAGE_LIBRARY_ENUM = ['animate_css', 'aos', 'swiper', 'gsap', 'scrolltrigger', 'scrollsmoother'];
 const PAGE_LIBRARY_DESCRIPTION = 'Required page-scoped external visual support list. Pass [] when no external library is used. Supported keys: animate_css (CSS animation classes), aos (JS+CSS scroll reveal), swiper (JS+CSS sliders), gsap (advanced animation core), scrolltrigger (GSAP scroll animations; also enables gsap), scrollsmoother (GSAP smooth scrolling; also enables gsap and scrolltrigger). Do not include library CDN tags in content.html; SlimWeb injects fixed CDN assets from this allowlist.';
-const PAGE_CONTENT_DESCRIPTION = 'Structured single-page body. Provide content.html or content.body_html containing this page HTML, custom CSS, and page-scoped inline JavaScript when needed. Do not include external script/link/iframe tags or inline event handlers. Select external visual libraries through enabled_libraries.';
+const PAGE_CONTENT_DESCRIPTION = 'Structured single-page body. Put non-executable page HTML and custom CSS in content.html or content.body_html. Put the complete page behavior source without script tags in content.javascript; Webless stores it in the single MCP-owned formal asset 90-mcp-page.js. Select external visual libraries only through enabled_libraries.';
+const PAGE_CONTENT_SCHEMA = {
+  type: 'object',
+  description: PAGE_CONTENT_DESCRIPTION,
+  properties: {
+    html: { type: 'string', description: 'Page HTML and scoped CSS without executable scripts, external link tags, or inline event handlers.' },
+    body_html: { type: 'string', description: 'Alias for content.html.' },
+    javascript: {
+      type: 'string',
+      maxLength: 102400,
+      description: 'Complete page behavior source without script tags. On update, omit to preserve the existing 90-mcp-page.js asset; send an empty string to delete it. Nonblank values replace the whole canonical file.'
+    }
+  },
+  anyOf: [{ required: ['html'] }, { required: ['body_html'] }],
+  additionalProperties: false
+};
 const PAGE_ENABLED_LIBRARIES_SCHEMA = {
   type: 'array',
   description: PAGE_LIBRARY_DESCRIPTION,
@@ -2329,7 +2344,7 @@ const MCP_TOOLS = [
   },
   {
     name: 'slimweb_pages_get_content',
-    description: 'Read an editable page by page_name and return its content plus metadata. This includes custom pages and the homepage index; other fixed template pages are not editable. Use this before editing a page or when the AI needs the current page state.',
+    description: 'Read an editable page by page_name and return content.html, the complete content.javascript source, enabled_libraries, javascript_asset, and javascript_conflicts. This includes custom pages and the homepage index; other fixed template pages are not editable. Use this before editing so one replacement source can preserve or change all existing behavior.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -2344,7 +2359,7 @@ const MCP_TOOLS = [
   },
   {
     name: 'slimweb_pages_create',
-    description: `Create a new custom page. The AI must already have checked title collisions with slimweb_pages_check_title and should use slimweb_design_context_get plus image tools before sending single-page HTML/CSS/page-scoped JavaScript. The AI may choose enabled_libraries from animate_css, aos, swiper, gsap, scrolltrigger, or scrollsmoother when useful, and must pass [] when none are used. ${CHATGPT_MISSING_IMAGE_GUIDANCE}`,
+    description: `Create a new custom page. The AI must already have checked title collisions with slimweb_pages_check_title and should use slimweb_design_context_get plus image tools before sending single-page HTML/CSS and optional formal JavaScript. Page behavior is stored only in 90-mcp-page.js; GSAP, Swiper, and other dependencies are selected through enabled_libraries and never become page files. The AI may choose enabled_libraries from animate_css, aos, swiper, gsap, scrolltrigger, or scrollsmoother when useful, and must pass [] when none are used. ${CHATGPT_MISSING_IMAGE_GUIDANCE}`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -2353,10 +2368,7 @@ const MCP_TOOLS = [
           type: 'string',
           description: 'Human-readable page title.'
         },
-        content: {
-          type: 'object',
-          description: PAGE_CONTENT_DESCRIPTION
-        },
+        content: { ...PAGE_CONTENT_SCHEMA },
         enabled_libraries: {
           ...PAGE_ENABLED_LIBRARIES_SCHEMA
         },
@@ -2373,7 +2385,7 @@ const MCP_TOOLS = [
   },
   {
     name: 'slimweb_pages_update',
-    description: `Update an existing editable page by page_name. This includes custom pages and the homepage index; other fixed template pages are not editable. Use slimweb_pages_get_content first to fetch the current page state, including enabled_libraries. Use uploaded media_path URLs for reusable images; do not embed base64 images. Custom CSS and page-scoped inline JavaScript are allowed in page HTML; external libraries must be selected through the required enabled_libraries array. ${CHATGPT_MISSING_IMAGE_GUIDANCE}`,
+    description: `Update an existing editable page by page_name. This includes custom pages and the homepage index; other fixed template pages are not editable. Use slimweb_pages_get_content first to fetch content.javascript, javascript_asset, javascript_conflicts, and enabled_libraries. A nonblank content.javascript replaces the whole 90-mcp-page.js file; omit it to preserve the file, or send an empty string to delete it. Use uploaded media_path URLs for reusable images; do not embed base64 images. Page HTML remains non-executable and external libraries must be selected through the required enabled_libraries array. ${CHATGPT_MISSING_IMAGE_GUIDANCE}`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -2386,10 +2398,7 @@ const MCP_TOOLS = [
           type: 'string',
           description: 'Optional new page title. If omitted, the existing title is preserved.'
         },
-        content: {
-          type: 'object',
-          description: PAGE_CONTENT_DESCRIPTION
-        },
+        content: { ...PAGE_CONTENT_SCHEMA },
         enabled_libraries: {
           ...PAGE_ENABLED_LIBRARIES_SCHEMA
         },
@@ -2711,6 +2720,7 @@ function toolExceptionToMcpError(id, error) {
     UPSTREAM_NOT_CONFIGURED: -32005,
     UPSTREAM_ERROR: -32007,
     UNSAFE_CONTENT: -32006,
+    CONFLICT: -32009,
     NOT_IMPLEMENTED: -32004
   };
   const reason = error.code ?? 'TOOL_FAILED';
@@ -2718,7 +2728,7 @@ function toolExceptionToMcpError(id, error) {
 
   return mcpError(id, code, error.message || 'MCP tool failed.', {
     reason,
-    ...(error.data && typeof error.data === 'object' ? error.data : {})
+    details: error.details && typeof error.details === 'object' ? error.details : {}
   });
 }
 

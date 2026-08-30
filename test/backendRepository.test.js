@@ -161,3 +161,28 @@ test('theme repository clones only explicit custom sources and blocks literal De
 
   assert.equal(requests.length, 1);
 });
+
+test('page repository preserves nested HTML JavaScript and library declarations', async () => {
+  const { requests, transport } = transportRecorder(() => ({ ok: true }));
+  const repository = new SlimWebBackendRepository({
+    transport,
+    idempotencyKeyFactory: () => 'page-javascript-001'
+  });
+  const payload = {
+    site_code: 'swcb_demo',
+    page_name: 'index',
+    content: {
+      html: '<main class="swiper">Slides</main>',
+      javascript: "new Swiper('.swiper');"
+    },
+    enabled_libraries: ['swiper']
+  };
+
+  await repository.updatePage(actor, payload);
+
+  assert.deepEqual(requests[0].body, {
+    page_name: 'index',
+    content: payload.content,
+    enabled_libraries: ['swiper']
+  });
+});
