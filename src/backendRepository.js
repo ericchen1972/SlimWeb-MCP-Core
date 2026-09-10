@@ -669,6 +669,47 @@ export class SlimWebBackendRepository {
     return this.commerceMutation(actor, `/commerce/product-add-ons/${this.requiredId(args?.product_add_on_id, 'product_add_on_id')}`, 'DELETE', 'slimweb_product_add_ons_delete', 'add_on_product_management', args, ['product_add_on_id']);
   }
 
+  async getInvoiceSettings(actor) {
+    return this.request(this.sitePath(actor, '/commerce/settings/invoice'), { identity: actor, tool: 'slimweb_invoice_settings_get', permission: 'payments_shipping' });
+  }
+
+  async updateInvoiceSettings(actor, args) {
+    return this.commerceMutation(actor, '/commerce/settings/invoice', 'PUT', 'slimweb_invoice_settings_update', 'payments_shipping', args);
+  }
+
+  async listInvoices(actor, args) {
+    return this.commerceList(actor, '/commerce/invoices', 'slimweb_invoices_list', 'invoices_management', args, ['order_id', 'status', 'provider', 'mode', 'keyword', 'date_from', 'date_to', 'limit', 'offset']);
+  }
+
+  async getInvoice(actor, args) {
+    return this.request(this.sitePath(actor, `/commerce/invoices/${this.requiredId(args?.invoice_id, 'invoice_id')}`), { identity: actor, tool: 'slimweb_invoices_get', permission: 'invoices_management' });
+  }
+
+  async createInvoice(actor, args) { return this.invoiceMutation(actor, args, 'create'); }
+  async issueInvoice(actor, args) { return this.invoiceMutation(actor, args, 'issue'); }
+  async voidInvoice(actor, args) { return this.invoiceMutation(actor, args, 'void'); }
+  async allowanceInvoice(actor, args) { return this.invoiceMutation(actor, args, 'allowance'); }
+  async syncInvoice(actor, args) {
+    return this.commerceMutation(actor, `/commerce/invoices/${this.requiredId(args?.invoice_id, 'invoice_id')}/sync`, 'POST', 'slimweb_invoices_sync', 'invoices_management', args, ['invoice_id']);
+  }
+
+  async invoiceMutation(actor, args, action) {
+    if (action !== 'create' && args?.confirmed !== true) {
+      throw new BackendError('Explicit user intent is required: confirmed must be true.', { code: 'VALIDATION_ERROR' });
+    }
+    const key = String(args?.idempotency_key ?? '').trim();
+    if (!/^[A-Za-z0-9._:-]{8,128}$/.test(key)) {
+      throw new BackendError('A stable idempotency_key is required for invoice mutations.', { code: 'VALIDATION_ERROR' });
+    }
+    if (action === 'allowance' && args?.buyer_agreed !== true) {
+      throw new BackendError('Prior buyer agreement is required for an allowance.', { code: 'VALIDATION_ERROR' });
+    }
+    const suffix = action === 'create' ? '' : `/${this.requiredId(args?.invoice_id, 'invoice_id')}/${action}`;
+    const body = this.withoutSiteSelector(args);
+    delete body.invoice_id;
+    return this.request(this.sitePath(actor, `/commerce/invoices${suffix}`), { method: 'POST', identity: actor, tool: `slimweb_invoices_${action}`, permission: 'invoices_management', idempotencyKey: key, body });
+  }
+
   async listOrders(actor, args) {
     return this.commerceList(actor, '/commerce/orders', 'slimweb_orders_list', 'orders_management', args, ['search_order_no', 'search_field', 'search_value', 'fuzzy', 'date_from', 'date_to', 'amount_min', 'amount_max', 'logistics_status', 'statuses', 'limit', 'offset']);
   }

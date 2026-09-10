@@ -186,3 +186,45 @@ test('page repository preserves nested HTML JavaScript and library declarations'
     enabled_libraries: ['swiper']
   });
 });
+
+
+test('invoice operations preserve supplied retry keys and resolved site, separate settings permission', async () => {
+  const { requests, transport } = transportRecorder();
+  const repository = new SlimWebBackendRepository({ transport });
+  await repository.getInvoiceSettings(actor);
+  await repository.updateInvoiceSettings(actor, { site_code: 'foreign', provider: 'ecpay', mode: 'test', is_enabled: false });
+  await repository.listInvoices(actor, { site_code: 'foreign', status: 'issued', order_id: 25, limit: 20 });
+  await repository.getInvoice(actor, { invoice_id: 12 });
+  await repository.createInvoice(actor, { site_code: 'foreign', idempotency_key: 'invoice-draft-001', buyer: {} });
+  await repository.issueInvoice(actor, { invoice_id: 12, idempotency_key: 'invoice-issue-001', confirmed: true });
+  await repository.syncInvoice(actor, { invoice_id: 12 });
+  await repository.voidInvoice(actor, { invoice_id: 12, reason: 'Wrong buyer', idempotency_key: 'invoice-void-001', confirmed: true });
+  await repository.allowanceInvoice(actor, { invoice_id: 12, amount: 100, buyer_agreed: true, reason: 'Partial refund', idempotency_key: 'invoice-allowance-001', confirmed: true });
+  assert.ok(requests.every(r => r.path.startsWith('/internal/mcp/v1/sites/swcb_demo/commerce/')));
+  assert.ok(requests.every(r => !r.body?.site_code));
+  assert.equal(requests[0].permission, 'payments_shipping');
+  assert.equal(requests[2].permission, 'invoices_management');
+  assert.match(requests[2].path, /order_id=25/);
+  assert.equal(requests[5].path, '/internal/mcp/v1/sites/swcb_demo/commerce/invoices/12/issue');
+  assert.equal(requests[5].idempotencyKey, 'invoice-issue-001');
+  assert.equal(requests[7].idempotencyKey, 'invoice-void-001');
+  assert.equal(requests[8].body.amount, 100);
+});
+
+test('financial invoice mutations reject missing intent and missing stable retry keys before transport', async () => {
+  const { requests, transport } = transportRecorder();
+  const repository = new SlimWebBackendRepository({ transport });
+  for (const method of ['issueInvoice', 'voidInvoice', 'allowanceInvoice']) {
+    await assert.rejects(() => repository[method](actor, { invoice_id: 12, idempotency_key: 'invoice-intent-001' }), /explicit|confirm/i);
+    await assert.rejects(() => repository[method](actor, { invoice_id: 12, confirmed: true }), /idempotency/i);
+  }
+  assert.equal(requests.length, 0);
+});
+
+
+test('allowance requires separate buyer agreement even when merchant confirms the operation', async () => {
+  const { requests, transport } = transportRecorder();
+  const repository = new SlimWebBackendRepository({ transport });
+  await assert.rejects(() => repository.allowanceInvoice(actor, { invoice_id: 12, confirmed: true, idempotency_key: 'allowance-consent-001', amount: 100, reason: 'Refund' }), /buyer/i);
+  assert.equal(requests.length, 0);
+});

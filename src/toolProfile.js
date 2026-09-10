@@ -4,19 +4,22 @@ function clone(value) {
 
 export function createToolProfile({
   enabledTools = null,
+  excludedTools = [],
   schemaProjections = {},
   serverGuidelines = null
 } = {}) {
   const enabled = enabledTools === null ? null : new Set(enabledTools);
 
+  const excluded = new Set(excludedTools);
+
   return Object.freeze({
     serverGuidelines,
     allows(name) {
-      return enabled === null || enabled.has(name);
+      return !excluded.has(name) && (enabled === null || enabled.has(name));
     },
     apply(tools) {
       return tools
-        .filter((tool) => enabled === null || enabled.has(tool.name))
+        .filter((tool) => !excluded.has(tool.name) && (enabled === null || enabled.has(tool.name)))
         .map((tool) => {
           const projectedProperties = schemaProjections[tool.name];
           if (!Array.isArray(projectedProperties)) {

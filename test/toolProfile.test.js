@@ -47,9 +47,10 @@ async function listTools(toolProfile = createToolProfile(), toolProfileResolver 
 
 test('default tool profile preserves the SaaS contract', async () => {
   const tools = await listTools();
-  const hash = createHash('sha256').update(JSON.stringify(tools)).digest('hex');
+  const existing = tools.filter(tool => !tool.name.startsWith('slimweb_invoice'));
+  const hash = createHash('sha256').update(JSON.stringify(existing)).digest('hex');
 
-  assert.equal(tools.length, 128);
+  assert.equal(tools.length, 137);
   assert.equal(hash, '944c5d2653132540b1406ab34d67c3d12eb0a8ff5c02e243115e640054112afb');
 });
 
@@ -145,4 +146,36 @@ test('tools list can resolve a profile for the current resource context', async 
   );
 
   assert.deepEqual(tools.map(({ name }) => name), ['slimweb_auth_status']);
+});
+
+
+test('invoice catalog requires explicit financial intent and exposes bounded credential writes', async () => {
+  const tools = await listTools();
+  for (const action of ['issue', 'void', 'allowance']) {
+    const tool = tools.find(t => t.name === `slimweb_invoices_${action}`);
+    assert.ok(tool, action);
+    assert.ok(tool.inputSchema.required.includes('idempotency_key'));
+    assert.ok(tool.inputSchema.required.includes('confirmed'));
+    assert.equal(tool.annotations.destructiveHint, true);
+  }
+  const create = tools.find(t => t.name === 'slimweb_invoices_create');
+  assert.match(create.description, /draft/i);
+  assert.equal(create.inputSchema.properties.tax_rate, undefined);
+  assert.equal(tools.find(t => t.name === 'slimweb_invoice_settings_update').inputSchema.properties.hash_key.type, 'string');
+});
+
+
+test('excluded tool profiles reject both advertisement and dispatch', () => {
+  const profile = createToolProfile({ excludedTools: ['slimweb_invoices_issue'] });
+  assert.equal(profile.allows('slimweb_invoices_issue'), false);
+  assert.deepEqual(profile.apply([{ name: 'slimweb_invoices_issue' }]), []);
+  assert.equal(profile.allows('slimweb_orders_list'), true);
+});
+
+
+test('allowance exposes distinct required buyer consent declaration', async () => {
+  const tools = await listTools();
+  const allowance = tools.find(t => t.name === 'slimweb_invoices_allowance');
+  assert.ok(allowance.inputSchema.required.includes('buyer_agreed'));
+  assert.equal(allowance.inputSchema.properties.buyer_agreed.const, true);
 });

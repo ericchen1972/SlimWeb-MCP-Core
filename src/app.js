@@ -1,3 +1,4 @@
+import { INVOICE_TOOLS, INVOICE_METHODS } from './invoiceTools.js';
 import { createHash, randomBytes } from 'node:crypto';
 import path from 'node:path';
 
@@ -529,6 +530,7 @@ const MCP_PARITY_TOOLS = [
   }
 }));
 const MCP_TOOLS = [
+  ...INVOICE_TOOLS,
   ...MCP_PARITY_TOOLS,
   {
     name: 'slimweb_auth_status',
@@ -2772,6 +2774,7 @@ const TOOL_PERMISSION_RULES = {
   slimweb_mail_layout_update: ['mail_settings'],
   slimweb_payment_logistics_get: ['payment_logistics'],
   slimweb_payment_logistics_update: ['payment_logistics'],
+  ...Object.fromEntries(INVOICE_TOOLS.map(tool => [tool.name, [tool.name.startsWith('slimweb_invoice_settings_') ? 'payments_shipping' : 'invoices_management']])),
   slimweb_orders_list: ['orders_management'],
   slimweb_orders_profit_statistics: ['orders_management'],
   slimweb_orders_get: ['orders_management'],
@@ -3461,6 +3464,24 @@ async function toolResultForCall(message, request, context) {
           toolArgs(message)
         );
 
+        return mcpResult(message.id ?? null, mcpJsonContent(result));
+      } catch (error) {
+        return toolExceptionToMcpError(message?.id ?? null, error);
+      }
+    }
+
+    case 'slimweb_invoice_settings_get':
+    case 'slimweb_invoice_settings_update':
+    case 'slimweb_invoices_list':
+    case 'slimweb_invoices_get':
+    case 'slimweb_invoices_create':
+    case 'slimweb_invoices_issue':
+    case 'slimweb_invoices_sync':
+    case 'slimweb_invoices_void':
+    case 'slimweb_invoices_allowance': {
+      try {
+        const args = toolArgs(message);
+        const result = await context.accountRepository[INVOICE_METHODS[name]](await actorForTool(session, name, args, context), args);
         return mcpResult(message.id ?? null, mcpJsonContent(result));
       } catch (error) {
         return toolExceptionToMcpError(message?.id ?? null, error);
