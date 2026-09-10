@@ -16,7 +16,7 @@ export const INVOICE_TOOLS = [
   }, [], false, true),
   tool('invoices_get', 'Get an invoice snapshot and status, without provider credentials.', id, ['invoice_id'], false, true),
   tool('invoices_create', 'Create a reviewable invoice draft; never issues a tax invoice. Supply order_id to snapshot an order, or transaction_date, buyer and items for a standalone cash/manual sale. NTD tax-inclusive ordinary taxable 5% only; no configurable tax rate.', {
-    ...key, order_id: { type: 'integer', minimum: 1 }, transaction_date: { type: 'string', format: 'date' },
+    ...key, draft_id: { type: 'integer', minimum: 1, description: 'Update an existing unissued draft or definitively failed invoice with corrected buyer/items; never processing/unknown/issued. Returns the same invoice; no financial issuance. Use a new stable request key for this corrected payload and reuse it for retries.' }, order_id: { type: 'integer', minimum: 1 }, transaction_date: { type: 'string', format: 'date' },
     buyer: { type: 'object', additionalProperties: false, properties: Object.fromEntries(['name', 'email', 'phone', 'address', 'tax_id', 'carrier_number', 'donation_code'].map(name => [name, { type: 'string' }]).concat([['carrier_type', { type: 'string', enum: ['none', 'mobile', 'citizen', 'member', 'donation'] }]])) },
     items: { type: 'array', minItems: 1, maxItems: 100, items: { type: 'object', additionalProperties: false, properties: { name: { type: 'string' }, quantity: { type: 'integer', minimum: 1 }, unit: { type: 'string' }, unit_price: { type: 'integer', minimum: 0 } }, required: ['name', 'quantity', 'unit_price'] } }
   }, ['idempotency_key']),

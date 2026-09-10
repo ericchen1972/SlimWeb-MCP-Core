@@ -179,3 +179,12 @@ test('allowance exposes distinct required buyer consent declaration', async () =
   assert.ok(allowance.inputSchema.required.includes('buyer_agreed'));
   assert.equal(allowance.inputSchema.properties.buyer_agreed.const, true);
 });
+
+
+test('invoice creation can explicitly repair a draft without adding an issue operation', async () => {
+  const tools = await listTools();
+  const create = tools.find(t => t.name === 'slimweb_invoices_create');
+  assert.equal(create.inputSchema.properties.draft_id.type, 'integer');
+  assert.match(create.inputSchema.properties.draft_id.description, /unknown/);
+  assert.ok(create.inputSchema.required.includes('idempotency_key'));
+});

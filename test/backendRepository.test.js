@@ -228,3 +228,12 @@ test('allowance requires separate buyer agreement even when merchant confirms th
   await assert.rejects(() => repository.allowanceInvoice(actor, { invoice_id: 12, confirmed: true, idempotency_key: 'allowance-consent-001', amount: 100, reason: 'Refund' }), /buyer/i);
   assert.equal(requests.length, 0);
 });
+
+
+test('invoice draft repair preserves explicit invoice target and stable request key', async () => {
+  const {requests, transport} = transportRecorder();
+  const repository = new SlimWebBackendRepository({transport});
+  await repository.createInvoice(actor, {draft_id: 12, idempotency_key: 'draft-repair-001', buyer: {name: 'Correct buyer'}});
+  assert.equal(requests[0].body.draft_id, 12);
+  assert.equal(requests[0].idempotencyKey, 'draft-repair-001');
+});
