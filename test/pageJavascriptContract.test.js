@@ -112,3 +112,21 @@ test('page JavaScript conflicts retain the backend conflict code and assets', as
   assert.equal(payload.error.data.details.reason, 'PAGE_JAVASCRIPT_CONFLICT');
   assert.deepEqual(payload.error.data.details.conflicts, [conflict]);
 });
+
+
+test('logistics tools do not offer retired OK Mart', async () => {
+  const payload = await requestMcp({ async listSitesForAdminIdentity() { return []; } }, {
+    jsonrpc: '2.0', id: 1, method: 'tools/list'
+  });
+  let checked = 0;
+  function check(node) {
+    if (!node || typeof node !== 'object') return;
+    if (Array.isArray(node.enum) && node.enum.includes('seven')) {
+      checked++;
+      assert.deepEqual(node.enum, ['seven', 'family', 'hilife']);
+    }
+    Object.values(node).forEach(check);
+  }
+  payload.result.tools.forEach(tool => check(tool.inputSchema));
+  assert.ok(checked >= 2);
+});

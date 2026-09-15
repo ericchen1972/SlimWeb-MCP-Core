@@ -1131,8 +1131,8 @@ const MCP_TOOLS = [
               sender_address: { type: 'string' },
               store_types: {
                 type: 'array',
-                items: { type: 'string', enum: ['seven', 'family', 'hilife', 'ok'] },
-                description: 'ECPay supports seven/family/hilife/ok. NewebPay supports seven/family/hilife only.'
+                items: { type: 'string', enum: ['seven', 'family', 'hilife'] },
+                description: 'ECPay and NewebPay support seven/family/hilife. OK Mart logistics is no longer supported.'
               },
               logistics_type: {
                 type: 'string',
@@ -1173,7 +1173,7 @@ const MCP_TOOLS = [
         order_id: { type: 'integer' },
         order_no: { type: 'string' },
         provider: { type: 'string', enum: ['ecpay', 'newebpay', 'hct'] },
-        store_type: { type: 'string', enum: ['seven', 'family', 'hilife', 'ok'] },
+        store_type: { type: 'string', enum: ['seven', 'family', 'hilife'] },
         temperature: { type: 'string', enum: ['normal', 'refrigerated', 'frozen'] },
         carrier: { type: 'string', enum: ['tcat', 'post'] }
       },
