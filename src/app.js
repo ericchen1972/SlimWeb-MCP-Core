@@ -18,6 +18,7 @@ const SERVICE_NAME = 'slimweb-mcp';
 const SERVICE_VERSION = '0.1.0';
 const CHATGPT_MISSING_IMAGE_GUIDANCE = 'In ChatGPT Remote MCP, if a page or article request needs an image but no usable attached image or directly downloadable image URL is available, stop the task and ask the user to paste or re-upload the image before continuing.';
 const MCP_SERVER_GUIDELINES = [
+'Site AI rule: general MCP tools use the external AI client and remain available when site AI is not configured. Server-side AI generation, including posters, requires the site AI provider and API key configured in the site integration settings. The provider is none (default), agnes, or openai, with one API key and separate text_model and image_model. Never assume shared platform credentials or ask users to paste API keys into tool arguments. If generation reports a configuration error, direct the user to the site integration settings and preserve the backend error; do not retry with a shared provider. Newsletter HTML, page content, and article content composed by the external client do not require site AI.',
 'Before calling any SlimWeb MCP tool, first call SlimWeb.slimweb_sites_list to obtain valid site_code values and site names.',
 'If SlimWeb.slimweb_sites_list returns more than one site, stop the task and list the available site names for the user to choose from.',
 'Never use a site_code that does not appear in the SlimWeb.slimweb_sites_list result. Do not ask the user for numeric site_id values.',
@@ -2029,7 +2030,7 @@ const MCP_TOOLS = [
     },
     {
       name: 'slimweb_newsletters_create',
-      description: 'Create a scheduled SlimWeb newsletter for all active members. This stores no recipient rows and does not send email directly. At the scheduled time SlimWeb queries the current active-member emails. If scheduled_at is omitted, SlimWeb-MCP sets it to the current time plus 5 minutes.',
+      description: 'Create a scheduled SlimWeb newsletter for all active members from HTML composed by the external AI client; this does not require configured site AI or invoke server-side AI generation. This stores no recipient rows and does not send email directly. At the scheduled time SlimWeb queries the current active-member emails. If scheduled_at is omitted, SlimWeb-MCP sets it to the current time plus 5 minutes.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -2049,7 +2050,7 @@ const MCP_TOOLS = [
     },
     {
       name: 'slimweb_posters_create',
-      description: 'Create a durable AI-generated ecommerce poster using up to five product names, the site name/logo, product names, product primary images as image-edit references, and the user drawing request. The generated poster is stored as a media asset and returned with image_url plus asset.media_path. If any product name fuzzy search matches multiple products, stop and return candidates for user confirmation.',
+      description: 'Create a durable AI-generated ecommerce poster using up to five product names, the site name/logo, product names, product primary images as image-edit references, and the user drawing request. Requires the site AI provider and API key configured in the site integration settings; backend generation uses that site configuration without shared platform credentials. The generated poster is stored as a media asset and returned with image_url plus asset.media_path. If any product name fuzzy search matches multiple products, stop and return candidates for user confirmation.',
       inputSchema: {
         type: 'object',
         properties: {
