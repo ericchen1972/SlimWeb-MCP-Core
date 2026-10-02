@@ -17,4 +17,4 @@ Standalone capabilities are independently gated: `line_bot_settings_read/write`,
 
 ## Release dependency
 
-Core v0.1.12 introduces this contract. Consumers must pin v0.1.12 or later and regenerate/install lockfiles before deployment. Deploy the backend routes and capability advertisement before enabling the updated gateway. Run Core and both consumer test suites against the installed release, including the frozen 146-tool SaaS contract.
+Core v0.1.13 introduces this contract. Consumers must pin v0.1.13 or later and regenerate/install lockfiles before deployment. Deploy the backend routes and capability advertisement before enabling the updated gateway. Run Core and both consumer test suites against the installed release, including the frozen 146-tool SaaS contract.

@@ -51,7 +51,7 @@ test('default tool profile preserves the SaaS contract', async () => {
   const hash = createHash('sha256').update(JSON.stringify(existing)).digest('hex');
 
   assert.equal(tools.length, 146);
-  assert.equal(hash, 'ed8e5a94409ccc33cd1a7ae94757859da0497b4a20180ff324ad9b655b46e1c8');
+  assert.equal(hash, '01a9e823598c29bd09c4e5cb712a067a4164736de5fe0d8ddbad27e8139dfaaa');
 });
 
 test('member email is synchronous and newsletters have no recipient selector', async () => {
@@ -187,4 +187,13 @@ test('invoice creation can explicitly repair a draft without adding an issue ope
   assert.equal(create.inputSchema.properties.draft_id.type, 'integer');
   assert.match(create.inputSchema.properties.draft_id.description, /unknown/);
   assert.ok(create.inputSchema.required.includes('idempotency_key'));
+});
+
+test('integration reads describe write-only credentials and presence flags', async () => {
+  const tools = await listTools();
+  for (const [name, flag] of [['slimweb_notion_settings_get','has_notion_token'], ['slimweb_mail_delivery_settings_get','has_notification_smtp_password'], ['slimweb_payment_logistics_get','hasHashKey']]) {
+    const description = tools.find(tool => tool.name === name).description;
+    assert.match(description, /write-only/);
+    assert.ok(description.includes(flag));
+  }
 });

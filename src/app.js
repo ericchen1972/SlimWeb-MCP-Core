@@ -933,7 +933,7 @@ const MCP_TOOLS = [
   },
   {
     name: 'slimweb_notion_settings_get',
-    description: 'Read the Notion API token field shown in the SlimWeb admin settings.',
+    description: 'Read Notion integration configuration status. Credentials are write-only; has_notion_token reports presence and the saved token is never returned.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -985,7 +985,7 @@ const MCP_TOOLS = [
   },
   {
     name: 'slimweb_mail_delivery_settings_get',
-    description: 'Read SlimWeb mail delivery settings, including SMTP server fields, mail server availability, AI marketing email settings, and order/reminder notification options shown in the admin mail settings page.',
+    description: 'Read SlimWeb mail delivery settings, including SMTP server fields, mail server availability, AI marketing email settings, and order/reminder notification options shown in the admin mail settings page. Credentials are write-only; has_notification_smtp_password reports presence and the saved password is never returned.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1085,7 +1085,7 @@ const MCP_TOOLS = [
   },
   {
     name: 'slimweb_payment_logistics_get',
-    description: 'Read supported SlimWeb payment/logistics providers and current site settings. Use this to answer SlimWeb-specific payment/logistics questions from supported providers only.',
+    description: 'Read supported SlimWeb payment/logistics providers and current site settings. Credentials are write-only; provider settings return hasHashKey, hasHashIv and hasPassword presence flags, never saved secret values. Use this to answer SlimWeb-specific payment/logistics questions from supported providers only.',
     inputSchema: {
       type: 'object',
       properties: {
