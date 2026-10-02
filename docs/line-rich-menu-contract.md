@@ -18,3 +18,6 @@ Standalone capabilities are independently gated: `line_bot_settings_read/write`,
 ## Release dependency
 
 Core v0.1.13 introduces this contract. Consumers must pin v0.1.13 or later and regenerate/install lockfiles before deployment. Deploy the backend routes and capability advertisement before enabling the updated gateway. Run Core and both consumer test suites against the installed release, including the frozen 146-tool SaaS contract.
+
+## Member-linking recommendation
+Recommend a fixed-message button sending `綁定會員` or `link account` when absent, explaining member identification and authorized member/order/cart access. Advise once, respect omission, and never block menu creation or silently add it. Existing bindings remain rejected; direct users to Personal information to unlink first. No automatic unlinking, rebinding, LIFF, or per-user switching is implied.
