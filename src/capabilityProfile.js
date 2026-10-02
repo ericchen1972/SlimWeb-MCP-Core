@@ -1,6 +1,12 @@
 import { createToolProfile } from './toolProfile.js';
 
 const CAPABILITY_TOOLS = Object.freeze({
+  line_bot_settings_read: ['slimweb_line_bot_settings_get'],
+  line_bot_settings_write: ['slimweb_line_bot_settings_update'],
+  line_ai_settings_read: ['slimweb_line_ai_settings_get'],
+  line_ai_settings_write: ['slimweb_line_ai_settings_update'],
+  line_rich_menus_read: ['slimweb_line_rich_menus_list', 'slimweb_line_rich_menus_get'],
+  line_rich_menus_write: ['slimweb_line_rich_menus_create', 'slimweb_line_rich_menus_publish', 'slimweb_line_rich_menus_delete'],
   site_context: ['slimweb_auth_status', 'slimweb_sites_list', 'slimweb_site_select'],
   basic_settings_read: ['slimweb_settings_get'],
   basic_settings_write: ['slimweb_settings_update'],
@@ -15,7 +21,7 @@ const CAPABILITY_TOOLS = Object.freeze({
   admins_write: ['slimweb_admins_upsert', 'slimweb_admins_delete']
 });
 
-const BATCH1_CAPABILITIES = Object.freeze(Object.keys(CAPABILITY_TOOLS));
+const BATCH1_CAPABILITIES = Object.freeze(Object.keys(CAPABILITY_TOOLS).filter(name => !name.startsWith('line_')));
 
 export function createCapabilityToolProfile(capabilities = []) {
   const supported = new Set(capabilities.filter((value) => Object.hasOwn(CAPABILITY_TOOLS, value)));

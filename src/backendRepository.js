@@ -669,6 +669,29 @@ export class SlimWebBackendRepository {
     return this.commerceMutation(actor, `/commerce/product-add-ons/${this.requiredId(args?.product_add_on_id, 'product_add_on_id')}`, 'DELETE', 'slimweb_product_add_ons_delete', 'add_on_product_management', args, ['product_add_on_id']);
   }
 
+  async getLineBotSettings(actor) { return this.operationalRead(actor, '/integrations/line-bot', 'slimweb_line_bot_settings_get', 'integration_settings'); }
+  async updateLineBotSettings(actor, args) { return this.operationalMutation(actor, '/integrations/line-bot', 'slimweb_line_bot_settings_update', 'integration_settings', args); }
+  async getLineAiSettings(actor) { return this.operationalRead(actor, '/integrations/line-ai', 'slimweb_line_ai_settings_get', 'integration_settings'); }
+  async updateLineAiSettings(actor, args) { return this.operationalMutation(actor, '/integrations/line-ai', 'slimweb_line_ai_settings_update', 'integration_settings', args); }
+  async listLineRichMenus(actor) { return this.operationalRead(actor, '/integrations/line-rich-menus', 'slimweb_line_rich_menus_list', 'integration_settings'); }
+  lineRichMenuId(args) {
+    const id = String(args?.rich_menu_id ?? '');
+    if (!/^[A-Za-z0-9_-]{1,128}$/.test(id)) throw new BackendError('Invalid rich_menu_id.', {code:'VALIDATION_ERROR'});
+    return encodeURIComponent(id);
+  }
+  async getLineRichMenu(actor, args) { return this.operationalRead(actor, `/integrations/line-rich-menus/${this.lineRichMenuId(args)}`, 'slimweb_line_rich_menus_get', 'integration_settings'); }
+  async createLineRichMenu(actor, args) { return this.lineRichMenuMutation(actor, args, 'create'); }
+  async publishLineRichMenu(actor, args) { return this.lineRichMenuMutation(actor, args, 'publish'); }
+  async deleteLineRichMenu(actor, args) { return this.lineRichMenuMutation(actor, args, 'delete'); }
+  async lineRichMenuMutation(actor, args, action) {
+    const key = String(args?.idempotency_key ?? '').trim();
+    if (!/^[A-Za-z0-9._:-]{8,128}$/.test(key)) throw new BackendError('A stable idempotency_key is required.', {code:'VALIDATION_ERROR'});
+    if (action === 'create' && args?.areas?.some(area => !['uri','message','richmenuswitch','clipboard'].includes(area?.action?.type))) throw new BackendError('Unsupported Rich Menu action type.', {code:'VALIDATION_ERROR'});
+    const suffix = action === 'create' ? '' : `/${this.lineRichMenuId(args)}${action === 'publish' ? '/publish' : ''}`;
+    const body = this.withoutSiteSelector(args); delete body.rich_menu_id;
+    return this.request(this.sitePath(actor, `/integrations/line-rich-menus${suffix}`), {method:action === 'delete' ? 'DELETE' : 'POST',identity:actor,tool:`slimweb_line_rich_menus_${action}`,permission:'integration_settings',idempotencyKey:key,body});
+  }
+
   async getInvoiceSettings(actor) {
     return this.request(this.sitePath(actor, '/commerce/settings/invoice'), { identity: actor, tool: 'slimweb_invoice_settings_get', permission: 'payments_shipping' });
   }

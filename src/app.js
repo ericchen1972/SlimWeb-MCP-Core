@@ -1,3 +1,4 @@
+import { LINE_TOOLS, LINE_METHODS } from './lineTools.js';
 import { INVOICE_TOOLS, INVOICE_METHODS } from './invoiceTools.js';
 import { createHash, randomBytes } from 'node:crypto';
 import path from 'node:path';
@@ -532,6 +533,7 @@ const MCP_PARITY_TOOLS = [
 }));
 const MCP_TOOLS = [
   ...INVOICE_TOOLS,
+  ...LINE_TOOLS,
   ...MCP_PARITY_TOOLS,
   {
     name: 'slimweb_auth_status',
@@ -2775,6 +2777,7 @@ const TOOL_PERMISSION_RULES = {
   slimweb_mail_layout_update: ['mail_settings'],
   slimweb_payment_logistics_get: ['payment_logistics'],
   slimweb_payment_logistics_update: ['payment_logistics'],
+  ...Object.fromEntries(LINE_TOOLS.map(tool => [tool.name, ['integration_settings']])),
   ...Object.fromEntries(INVOICE_TOOLS.map(tool => [tool.name, [tool.name.startsWith('slimweb_invoice_settings_') ? 'payments_shipping' : 'invoices_management']])),
   slimweb_orders_list: ['orders_management'],
   slimweb_orders_profit_statistics: ['orders_management'],
@@ -3469,6 +3472,22 @@ async function toolResultForCall(message, request, context) {
       } catch (error) {
         return toolExceptionToMcpError(message?.id ?? null, error);
       }
+    }
+
+    case 'slimweb_line_bot_settings_get':
+    case 'slimweb_line_bot_settings_update':
+    case 'slimweb_line_ai_settings_get':
+    case 'slimweb_line_ai_settings_update':
+    case 'slimweb_line_rich_menus_list':
+    case 'slimweb_line_rich_menus_get':
+    case 'slimweb_line_rich_menus_create':
+    case 'slimweb_line_rich_menus_publish':
+    case 'slimweb_line_rich_menus_delete': {
+      try {
+        const args = toolArgs(message);
+        const result = await context.accountRepository[LINE_METHODS[name]](await actorForTool(session, name, args, context), args);
+        return mcpResult(message.id ?? null, mcpJsonContent(result));
+      } catch (error) { return toolExceptionToMcpError(message?.id ?? null, error); }
     }
 
     case 'slimweb_invoice_settings_get':
