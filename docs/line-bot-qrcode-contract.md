@@ -1,0 +1,5 @@
+# LINE Bot QR Code tool
+
+Approved scope: slimweb_line_bot_qrcode_get, SaaS and Standalone. Require saved Channel Secret/Access Token and verified Bot identity, integration_settings permission. QR retrieval does not require AI replies, enabled status or verified webhook. Call LINE /v2/bot/info each time to validate current credential/identity; never return credentials. Encode official Basic ID URL with a PHP library as lossless black/white PNG with at least four module quiet-zone; deterministic site-specific committed media path, reuse existing PNG, settings lock. Return basic_id, bot_name, add_friend_url, qr_image_url, media_path, dimensions and guidance to preserve square proportions and quiet-zone. No schema changes and no automatic homepage edit.
+
+Steps: regression tests for configured gate/API errors/identity mismatch, PNG decode and reuse; dependency and backend service/controller/routes; shared core tool/schema/repository/capability and contract tests; sync standalone, docs; relevant tests; immutable core release/gateway packages; deploy candidate and verify generated public PNG decoding before promotion. No messages sent.

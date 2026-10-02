@@ -670,6 +670,7 @@ export class SlimWebBackendRepository {
   }
 
   async getLineBotSettings(actor) { return this.operationalRead(actor, '/integrations/line-bot', 'slimweb_line_bot_settings_get', 'integration_settings'); }
+  async getLineBotQrCode(actor) { return this.request(this.sitePath(actor, '/integrations/line-bot/qrcode'), {method:'POST',identity:actor,tool:'slimweb_line_bot_qrcode_get',permission:'integration_settings',body:{}}); }
   async getLineFriendStats(actor) { return this.operationalRead(actor, '/integrations/line-friends/stats', 'slimweb_line_friends_stats', 'integration_settings'); }
   async listLineMembers(actor,args) { return this.commerceList(actor,'/integrations/line-friends/members','slimweb_line_members_list','integration_settings',args,['gender','country','city','birthday','birthday_month','birthday_from','birthday_to','names','limit','offset']); }
   async prepareLinePush(actor,args) {

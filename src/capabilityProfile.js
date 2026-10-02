@@ -1,6 +1,7 @@
 import { createToolProfile } from './toolProfile.js';
 
 const CAPABILITY_TOOLS = Object.freeze({
+  line_bot_qrcode: ['slimweb_line_bot_qrcode_get'],
   line_friends_read: ['slimweb_line_friends_stats', 'slimweb_line_members_list'],
   line_push_write: ['slimweb_line_push_prepare', 'slimweb_line_push_send', 'slimweb_line_push_status'],
   line_bot_settings_read: ['slimweb_line_bot_settings_get'],

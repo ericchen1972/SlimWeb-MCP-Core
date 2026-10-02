@@ -5,7 +5,7 @@ import { createRequestHandler } from '../src/app.js';
 import { createSessionToken } from '../src/session.js';
 import { SlimWebBackendRepository, BackendRepositoryError } from '../src/backendRepository.js';
 import { createCapabilityToolProfile } from '../src/capabilityProfile.js';
-const names = ['line_bot_settings_get','line_bot_settings_update','line_ai_settings_get','line_ai_settings_update','line_rich_menus_list','line_rich_menus_get','line_rich_menus_create','line_rich_menus_publish','line_rich_menus_delete','line_friends_stats','line_members_list','line_push_prepare','line_push_send','line_push_status'].map(x=>`slimweb_${x}`);
+const names = ['line_bot_settings_get','line_bot_settings_update','line_ai_settings_get','line_ai_settings_update','line_rich_menus_list','line_rich_menus_get','line_rich_menus_create','line_rich_menus_publish','line_rich_menus_delete','line_bot_qrcode_get','line_friends_stats','line_members_list','line_push_prepare','line_push_send','line_push_status'].map(x=>`slimweb_${x}`);
 async function request(repository, method, params) {
  const secret='line-contract-test'; const server=createServer(createRequestHandler({accountRepository:repository,sessionSecret:secret}));
  await new Promise(r=>server.listen(0,'127.0.0.1',r));

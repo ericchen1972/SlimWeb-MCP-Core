@@ -3483,6 +3483,7 @@ async function toolResultForCall(message, request, context) {
     case 'slimweb_line_rich_menus_create':
     case 'slimweb_line_rich_menus_publish':
     case 'slimweb_line_rich_menus_delete':
+    case 'slimweb_line_bot_qrcode_get':
     case 'slimweb_line_friends_stats':
     case 'slimweb_line_members_list':
     case 'slimweb_line_push_prepare':
