@@ -50,7 +50,7 @@ test('default tool profile preserves the SaaS contract', async () => {
   const existing = tools.filter(tool => !tool.name.startsWith('slimweb_invoice') && !tool.name.startsWith('slimweb_line_'));
   const hash = createHash('sha256').update(JSON.stringify(existing)).digest('hex');
 
-  assert.equal(tools.length, 146);
+  assert.equal(tools.length, 151);
   assert.equal(hash, 'd0048b1d79fde44128c9299e2e07e124ef6c2010e40a9dc5e3ed0ac6a67f89f6');
 });
 

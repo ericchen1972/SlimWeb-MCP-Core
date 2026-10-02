@@ -1,0 +1,7 @@
+# LINE member push contract
+
+Friends statistics are dated estimates. Member filters use website data joined to this Bot's binding, active members and friend_status=follow. Unbound users never become database members from friendship events. New and existing bindings default follow; signed follow/unfollow events update only existing links. Names must each resolve uniquely; absent/block/duplicate stops all. Empty attributes do not match.
+
+No audience asks all friends or eligible bound members. Explicit all uses broadcast; filtered/member recipients use multicast, 500 IDs per batch. Never split requests with more than five message objects. Prepare validates media/messages/products, checks quota, and returns every hyperlink and immutable preview. Human must confirm recipient scope/count, messages and URLs before send with operation_id/review_hash/confirmed=true. Actor, site, Bot and expiry are enforced. Reusing a prepare key with changed content is rejected. Accepted batches skip retries; unknown batches use the original LINE retry UUID. Accepted is API acceptance, not delivery.
+
+Member list is paginated and intended for client-side Excel generation. Do not expose raw LINE IDs in public outputs. Member queries require integration_settings and member_management/member_list; product-bearing prepare also requires product permissions. No real promotion is sent by automated tests or deployment verification.

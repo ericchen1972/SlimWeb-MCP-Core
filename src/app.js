@@ -2777,7 +2777,7 @@ const TOOL_PERMISSION_RULES = {
   slimweb_mail_layout_update: ['mail_settings'],
   slimweb_payment_logistics_get: ['payment_logistics'],
   slimweb_payment_logistics_update: ['payment_logistics'],
-  ...Object.fromEntries(LINE_TOOLS.map(tool => [tool.name, ['integration_settings']])),
+  ...Object.fromEntries(LINE_TOOLS.map(tool => [tool.name, ['integration_settings', ...(/line_(friends_stats|members_list|push_)/.test(tool.name) ? ['member_management','member_list'] : [])]])),
   ...Object.fromEntries(INVOICE_TOOLS.map(tool => [tool.name, [tool.name.startsWith('slimweb_invoice_settings_') ? 'payments_shipping' : 'invoices_management']])),
   slimweb_orders_list: ['orders_management'],
   slimweb_orders_profit_statistics: ['orders_management'],
@@ -3482,7 +3482,12 @@ async function toolResultForCall(message, request, context) {
     case 'slimweb_line_rich_menus_get':
     case 'slimweb_line_rich_menus_create':
     case 'slimweb_line_rich_menus_publish':
-    case 'slimweb_line_rich_menus_delete': {
+    case 'slimweb_line_rich_menus_delete':
+    case 'slimweb_line_friends_stats':
+    case 'slimweb_line_members_list':
+    case 'slimweb_line_push_prepare':
+    case 'slimweb_line_push_send':
+    case 'slimweb_line_push_status': {
       try {
         const args = toolArgs(message);
         const result = await context.accountRepository[LINE_METHODS[name]](await actorForTool(session, name, args, context), args);

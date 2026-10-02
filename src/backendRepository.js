@@ -670,6 +670,25 @@ export class SlimWebBackendRepository {
   }
 
   async getLineBotSettings(actor) { return this.operationalRead(actor, '/integrations/line-bot', 'slimweb_line_bot_settings_get', 'integration_settings'); }
+  async getLineFriendStats(actor) { return this.operationalRead(actor, '/integrations/line-friends/stats', 'slimweb_line_friends_stats', 'integration_settings'); }
+  async listLineMembers(actor,args) { return this.commerceList(actor,'/integrations/line-friends/members','slimweb_line_members_list','integration_settings',args,['gender','country','city','birthday','birthday_month','birthday_from','birthday_to','names','limit','offset']); }
+  async prepareLinePush(actor,args) {
+    const key=String(args?.idempotency_key??'');
+    if(!/^[A-Za-z0-9._:-]{8,128}$/.test(key)) throw new BackendError('Stable idempotency_key required.',{code:'VALIDATION_ERROR'});
+    if(!Array.isArray(args?.messages)||args.messages.length<1||args.messages.length>5) throw new BackendError('One to five message objects required.',{code:'VALIDATION_ERROR'});
+    const body=this.withoutSiteSelector(args);delete body.idempotency_key;
+    return this.request(this.sitePath(actor,'/integrations/line-push/prepare'),{method:'POST',identity:actor,tool:'slimweb_line_push_prepare',permission:'integration_settings',idempotencyKey:key,body});
+  }
+  linePushId(args) {
+    const id=String(args?.operation_id??'');
+    if(!/^[A-Za-z0-9-]{1,36}$/.test(id)) throw new BackendError('Invalid operation_id.',{code:'VALIDATION_ERROR'});
+    return encodeURIComponent(id);
+  }
+  async sendLinePush(actor,args) {
+    if(args?.confirmed!==true||!/^[a-f0-9]{64}$/.test(String(args?.review_hash??''))) throw new BackendError('Explicit final confirmation and review_hash required.',{code:'VALIDATION_ERROR'});
+    return this.request(this.sitePath(actor,`/integrations/line-push/${this.linePushId(args)}/send`),{method:'POST',identity:actor,tool:'slimweb_line_push_send',permission:'integration_settings',body:{confirmed:true,review_hash:args.review_hash}});
+  }
+  async getLinePushStatus(actor,args) { return this.operationalRead(actor,`/integrations/line-push/${this.linePushId(args)}`,'slimweb_line_push_status','integration_settings'); }
   async updateLineBotSettings(actor, args) { return this.operationalMutation(actor, '/integrations/line-bot', 'slimweb_line_bot_settings_update', 'integration_settings', args); }
   async getLineAiSettings(actor) { return this.operationalRead(actor, '/integrations/line-ai', 'slimweb_line_ai_settings_get', 'integration_settings'); }
   async updateLineAiSettings(actor, args) { return this.operationalMutation(actor, '/integrations/line-ai', 'slimweb_line_ai_settings_update', 'integration_settings', args); }
