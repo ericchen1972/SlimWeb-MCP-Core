@@ -1,4 +1,5 @@
 import { LINE_TOOLS, LINE_METHODS } from './lineTools.js';
+const PRODUCT_BINDING_GUIDANCE = 'Product layout contract: fixed products is a category-list template, not all products; its preview uses the first category. Never link to /products without a valid category. Create an all-products custom page only when requested. Wrap each product in a non-clickable container with data-product-id="<actual ID>"; do not nest containers. Mark every product name/original-price/special-price occurrence, including inline marketing text, with data-product-field="name", "original-price", or "special-price" (use spans inline). Price fields render grouped numbers; keep currency outside or use data-product-prefix/suffix. Use an anchor data-product-action="view" with the actual product href and a disabled button type="button" data-product-action="add-to-cart". The shared storefront runtime fetches current site-scoped data, updates names/prices and cart attributes, removes only confirmed hidden/deleted blocks, retains sold-out blocks, and preserves content on lookup failure. Missing/expired special price uses the original price. Other copy/images remain unchanged. Do not write product hydration JS.';
 import { INVOICE_TOOLS, INVOICE_METHODS } from './invoiceTools.js';
 import { createHash, randomBytes } from 'node:crypto';
 import path from 'node:path';
@@ -19,6 +20,7 @@ const SERVICE_NAME = 'slimweb-mcp';
 const SERVICE_VERSION = '0.1.0';
 const CHATGPT_MISSING_IMAGE_GUIDANCE = 'In ChatGPT Remote MCP, if a page or article request needs an image but no usable attached image or directly downloadable image URL is available, stop the task and ask the user to paste or re-upload the image before continuing.';
 const MCP_SERVER_GUIDELINES = [
+  PRODUCT_BINDING_GUIDANCE,
 'Site AI rule: general MCP tools use the external AI client and remain available when site AI is not configured. Server-side AI generation, including posters, requires the site AI provider and API key configured in the site integration settings. The provider is none (default), agnes, or openai, with one API key and separate text_model and image_model. Never assume shared platform credentials or ask users to paste API keys into tool arguments. If generation reports a configuration error, direct the user to the site integration settings and preserve the backend error; do not retry with a shared provider. Newsletter HTML, page content, and article content composed by the external client do not require site AI.',
 'Before calling any SlimWeb MCP tool, first call SlimWeb.slimweb_sites_list to obtain valid site_code values and site names.',
 'If SlimWeb.slimweb_sites_list returns more than one site, stop the task and list the available site names for the user to choose from.',
@@ -2319,7 +2321,7 @@ const MCP_TOOLS = [
   },
   {
     name: 'slimweb_pages_list',
-    description: 'List all fixed and custom site pages. Use this when you need the site-wide page inventory before a read, create, update, or navigation task.',
+      description: `List all fixed and custom site pages. Use this when you need the site-wide page inventory before a read, create, update, or navigation task. ${PRODUCT_BINDING_GUIDANCE}`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -2364,7 +2366,7 @@ const MCP_TOOLS = [
   },
   {
     name: 'slimweb_pages_create',
-    description: `Create a new custom page. The AI must already have checked title collisions with slimweb_pages_check_title and should use slimweb_design_context_get plus image tools before sending single-page HTML/CSS and optional formal JavaScript. Page behavior is stored only in 90-mcp-page.js; GSAP, Swiper, and other dependencies are selected through enabled_libraries and never become page files. The AI may choose enabled_libraries from animate_css, aos, swiper, gsap, scrolltrigger, or scrollsmoother when useful, and must pass [] when none are used. ${CHATGPT_MISSING_IMAGE_GUIDANCE}`,
+      description: `Create a new custom page. The AI must already have checked title collisions with slimweb_pages_check_title and should use slimweb_design_context_get plus image tools before sending single-page HTML/CSS and optional formal JavaScript. Page behavior is stored only in 90-mcp-page.js; GSAP, Swiper, and other dependencies are selected through enabled_libraries and never become page files. The AI may choose enabled_libraries from animate_css, aos, swiper, gsap, scrolltrigger, or scrollsmoother when useful, and must pass [] when none are used. ${PRODUCT_BINDING_GUIDANCE} ${CHATGPT_MISSING_IMAGE_GUIDANCE}`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -2390,7 +2392,7 @@ const MCP_TOOLS = [
   },
   {
     name: 'slimweb_pages_update',
-    description: `Update an existing editable page by page_name. This includes custom pages and the homepage index; other fixed template pages are not editable. Use slimweb_pages_get_content first to fetch content.javascript, javascript_asset, javascript_conflicts, and enabled_libraries. A nonblank content.javascript replaces the whole 90-mcp-page.js file; omit it to preserve the file, or send an empty string to delete it. Use uploaded media_path URLs for reusable images; do not embed base64 images. Page HTML remains non-executable and external libraries must be selected through the required enabled_libraries array. ${CHATGPT_MISSING_IMAGE_GUIDANCE}`,
+      description: `Update an existing editable page by page_name. This includes custom pages and the homepage index; other fixed template pages are not editable. Use slimweb_pages_get_content first to fetch content.javascript, javascript_asset, javascript_conflicts, and enabled_libraries. A nonblank content.javascript replaces the whole 90-mcp-page.js file; omit it to preserve the file, or send an empty string to delete it. Use uploaded media_path URLs for reusable images; do not embed base64 images. Page HTML remains non-executable and external libraries must be selected through the required enabled_libraries array. ${PRODUCT_BINDING_GUIDANCE} ${CHATGPT_MISSING_IMAGE_GUIDANCE}`,
     inputSchema: {
       type: 'object',
       properties: {

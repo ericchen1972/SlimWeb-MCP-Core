@@ -51,7 +51,18 @@ test('default tool profile preserves the SaaS contract', async () => {
   const hash = createHash('sha256').update(JSON.stringify(existing)).digest('hex');
 
   assert.equal(tools.length, 152);
-  assert.equal(hash, 'd0048b1d79fde44128c9299e2e07e124ef6c2010e40a9dc5e3ed0ac6a67f89f6');
+  assert.equal(hash, '4ba63d9b15b30f5d95062cfd24ca2707be91a5f961930dc028440ac8bfa85b86');
+});
+
+test('page tools teach live product bindings and category-only system lists', async () => {
+  const tools = await listTools();
+  for (const name of ['slimweb_pages_list', 'slimweb_pages_create', 'slimweb_pages_update']) {
+    const description = tools.find(tool => tool.name === name).description;
+    assert.match(description, /data-product-id/);
+    assert.match(description, /data-product-field/);
+    assert.match(description, /Never link to \/products without a valid category/);
+    assert.match(description, /preserves content on lookup failure/);
+  }
 });
 
 test('member email is synchronous and newsletters have no recipient selector', async () => {
