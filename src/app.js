@@ -2052,7 +2052,7 @@ const MCP_TOOLS = [
     },
     {
       name: 'slimweb_posters_create',
-      description: 'Create a durable AI-generated ecommerce poster using up to five product names, the site name/logo, product names, product primary images as image-edit references, and the user drawing request. Requires the site AI provider and API key configured in the site integration settings; backend generation uses that site configuration without shared platform credentials. The generated poster is stored as a media asset and returned with image_url plus asset.media_path. If any product name fuzzy search matches multiple products, stop and return candidates for user confirmation.',
+      description: 'Create a durable AI-generated ecommerce poster or branded graphic. Use product_names: [] for graphics without products, including Rich Menu backgrounds. With products, use up to five product names, the site name/logo, product names, product primary images as image-edit references, and the user drawing request. Requires the site AI provider and API key configured in the site integration settings; backend generation uses that site configuration without shared platform credentials. The generated poster is stored as a media asset and returned with image_url plus asset.media_path. If any product name fuzzy search matches multiple products, stop and return candidates for user confirmation.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -2060,7 +2060,7 @@ const MCP_TOOLS = [
           product_names: {
             type: 'array',
             items: { type: 'string' },
-            minItems: 1,
+            minItems: 0,
             maxItems: 5,
             description: 'Product names mentioned by the user. SlimWeb-MCP fuzzy-searches each name and stops for confirmation if any name matches more than one product.'
           },

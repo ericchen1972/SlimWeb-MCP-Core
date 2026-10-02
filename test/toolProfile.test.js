@@ -51,7 +51,7 @@ test('default tool profile preserves the SaaS contract', async () => {
   const hash = createHash('sha256').update(JSON.stringify(existing)).digest('hex');
 
   assert.equal(tools.length, 146);
-  assert.equal(hash, '01a9e823598c29bd09c4e5cb712a067a4164736de5fe0d8ddbad27e8139dfaaa');
+  assert.equal(hash, 'd0048b1d79fde44128c9299e2e07e124ef6c2010e40a9dc5e3ed0ac6a67f89f6');
 });
 
 test('member email is synchronous and newsletters have no recipient selector', async () => {
