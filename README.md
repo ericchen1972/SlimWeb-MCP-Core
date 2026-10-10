@@ -20,3 +20,6 @@ Core changes must be released with a new immutable Git tag, then both `SlimWeb-M
 npm install
 npm test
 ```
+
+## Website notifications
+See [site.notification contract](docs/site-notification-contract.md). One website subscription delivers new-order and return-request notices only. Display in the subscribed chat and wait for user instructions before actions. Requires Work Cloud host support; actual UI acceptance is separate from server tests.

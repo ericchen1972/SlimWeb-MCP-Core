@@ -237,3 +237,11 @@ test('invoice draft repair preserves explicit invoice target and stable request 
   assert.equal(requests[0].body.draft_id, 12);
   assert.equal(requests[0].idempotencyKey, 'draft-repair-001');
 });
+
+test('site notification subscription preserves actor context and maps protocol method to backend', async () => {
+ const {requests,transport}=transportRecorder(({path})=>path==='/internal/mcp/v1/site-context/resolve'?{actor:{site_id:101,permissions:['system_admin']},site}:{id:'sub_test'});
+ const repo=new SlimWebBackendRepository({transport});
+ const params={name:'site.notification',arguments:{site_code:'swcb_demo'},delivery:{mode:'webhook',url:'https://receiver.example.com/callback',secret:'whsec_test'}};
+ await repo.siteNotificationSubscription(identity,params,'subscribe');
+ assert.equal(requests[1].path,'/internal/mcp/v1/sites/swcb_demo/events/subscribe');assert.deepEqual(requests[1].body,params);assert.equal(requests[1].identity.resource_context,'shop.example.com');assert.equal(requests[1].tool,'events/subscribe');
+});

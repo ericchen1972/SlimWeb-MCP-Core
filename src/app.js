@@ -1,3 +1,4 @@
+import { handleEventMethod } from './events.js';
 import { LINE_TOOLS, LINE_METHODS } from './lineTools.js';
 const PRODUCT_BINDING_GUIDANCE = 'Product layout contract: fixed products is a category-list template, not all products; its preview uses the first category. Never link to /products without a valid category. Create an all-products custom page only when requested. Wrap each product in a non-clickable container with data-product-id="<actual ID>"; do not nest containers. Mark every product name/original-price/special-price occurrence, including inline marketing text, with data-product-field="name", "original-price", or "special-price" (use spans inline). Price fields render grouped numbers; keep currency outside or use data-product-prefix/suffix. Use an anchor data-product-action="view" with the actual product href and a disabled button type="button" data-product-action="add-to-cart". The shared storefront runtime fetches current site-scoped data, updates names/prices and cart attributes, removes only confirmed hidden/deleted blocks, retains sold-out blocks, and preserves content on lookup failure. Missing/expired special price uses the original price. Other copy/images remain unchanged. Do not write product hydration JS.';
 import { INVOICE_TOOLS, INVOICE_METHODS } from './invoiceTools.js';
@@ -4480,9 +4481,16 @@ async function handleMcpMessage(message, request, context) {
   const id = message?.id ?? null;
 
   switch (message?.method) {
+    case 'server/discover':
+      return mcpResult(id, {resultType: 'complete', supportedVersions: ['2026-07-28', '2025-03-26'], capabilities: {tools: {}, resources: {}, events: {}}, _meta: {'io.modelcontextprotocol/serverInfo': {name: SERVICE_NAME, version: SERVICE_VERSION}}, instructions: 'For site.notification, display the notification in this chat only. Wait for a later explicit user instruction before calling tools or changing any order.'});
+    case 'events/list':
+    case 'events/subscribe':
+    case 'events/unsubscribe':
+      return handleEventMethod(message, sessionIdentity(verifySessionToken(readSessionToken(request), context.sessionSecret)), context);
+
     case 'initialize':
       return mcpResult(id, {
-        protocolVersion: '2025-03-26',
+        protocolVersion: message?.params?.protocolVersion === '2026-07-28' ? '2026-07-28' : '2025-03-26',
         capabilities: {
           tools: {
             listChanged: false
@@ -4581,7 +4589,7 @@ async function handleMcp(request, response, context) {
     const session = verifySessionToken(readSessionToken(request), context.sessionSecret);
     logMcpRequest(request, message, Boolean(session));
 
-    if (message?.method === 'tools/call' && !session) {
+    if ((message?.method === 'tools/call' || message?.method?.startsWith('events/')) && !session) {
       mcpAuthRequiredResponse(request, response, context);
       return;
     }
@@ -4600,7 +4608,16 @@ async function handleMcp(request, response, context) {
       }
     }
 
-    jsonResponse(response, 200, await handleMcpMessage(message, request, context));
+    const payload = await handleMcpMessage(message, request, context);
+    const modern = message?.params?._meta?.['io.modelcontextprotocol/protocolVersion'] === '2026-07-28'
+      || request.headers['mcp-protocol-version'] === '2026-07-28'
+      || message?.method === 'server/discover' || message?.method?.startsWith('events/');
+    if (modern && payload.result) {
+      payload.result.resultType ??= 'complete';
+      payload.result._meta = {...payload.result._meta, 'io.modelcontextprotocol/serverInfo': {name: SERVICE_NAME, version: SERVICE_VERSION}};
+      response.setHeader('MCP-Protocol-Version', '2026-07-28');
+    }
+    jsonResponse(response, 200, payload);
   } catch (error) {
     const code = error.code === 'BODY_TOO_LARGE' ? -32000 : -32700;
     const message = error.code === 'BODY_TOO_LARGE' ? error.message : 'Invalid JSON request body';
@@ -5086,6 +5103,7 @@ function createDefaultContext(options = {}) {
     accountRepository: options.accountRepository,
     toolProfile: options.toolProfile ?? createToolProfile(),
     toolProfileResolver: options.toolProfileResolver ?? null,
+    eventsResolver: options.eventsResolver ?? null,
     resourceContext: options.resourceContext ?? createNullResourceContext(),
     sessionSecret: options.sessionSecret ?? process.env.MCP_SESSION_SECRET,
     publicBaseUrl: options.publicBaseUrl ?? process.env.PUBLIC_BASE_URL ?? '',

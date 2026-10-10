@@ -29,6 +29,13 @@ export class SlimWebBackendRepository {
     assertSlimWebBackend(this);
   }
 
+  async siteNotificationSubscription(identity, params, action) {
+    const actor = await this.resolveAdminSiteForIdentity(identity, {site_code: params.arguments.site_code});
+    return this.request(this.sitePath(actor, `/events/${action}`), {
+      method: 'POST', identity: actor, tool: `events/${action}`, permission: 'backend_ai_assistant', body: params
+    });
+  }
+
   async listAdminSitesForGoogleProfile(profile) {
     return this.listSitesForAdminIdentity({
       email: profile.email,
