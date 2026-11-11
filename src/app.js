@@ -1,4 +1,10 @@
+import { readFileSync } from 'node:fs';
+import { MERCHANT_CAPABILITY_URI, MERCHANT_CAPABILITY_GUIDANCE } from './merchantCapabilities.js';
 import { handleEventMethod } from './events.js';
+const MERCHANT_CAPABILITY_GUIDE = readFileSync(new URL('./merchant-capabilities.md', import.meta.url), 'utf8');
+function serverInstructions(context) {
+  return [context.toolProfile.serverGuidelines ?? MCP_SERVER_GUIDELINES, MERCHANT_CAPABILITY_GUIDANCE].join(' ');
+}
 import { LINE_TOOLS, LINE_METHODS } from './lineTools.js';
 const PRODUCT_BINDING_GUIDANCE = 'Product layout contract: fixed products is a category-list template, not all products; its preview uses the first category. Never link to /products without a valid category. Create an all-products custom page only when requested. Wrap each product in a non-clickable container with data-product-id="<actual ID>"; do not nest containers. Mark every product name/original-price/special-price occurrence, including inline marketing text, with data-product-field="name", "original-price", or "special-price" (use spans inline). Price fields render grouped numbers; keep currency outside or use data-product-prefix/suffix. Use an anchor data-product-action="view" with the actual product href and a disabled button type="button" data-product-action="add-to-cart". The shared storefront runtime fetches current site-scoped data, updates names/prices and cart attributes, removes only confirmed hidden/deleted blocks, retains sold-out blocks, and preserves content on lookup failure. Missing/expired special price uses the original price. Other copy/images remain unchanged. Do not write product hydration JS.';
 import { INVOICE_TOOLS, INVOICE_METHODS } from './invoiceTools.js';
@@ -1088,7 +1094,7 @@ const MCP_TOOLS = [
   },
   {
     name: 'slimweb_payment_logistics_get',
-    description: 'Read supported SlimWeb payment/logistics providers and current site settings. Credentials are write-only; provider settings return hasHashKey, hasHashIv and hasPassword presence flags, never saved secret values. Use this to answer SlimWeb-specific payment/logistics questions from supported providers only.',
+    description: 'Read supported SlimWeb payment/logistics providers, current site settings and callback URLs, including PayNow 7-ELEVEN frozen pickup and pay. Credentials are write-only; provider settings return hasHashKey, hasHashIv and hasPassword presence flags, never saved secret values. Use this to answer SlimWeb-specific payment/logistics questions from supported providers only.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1099,20 +1105,32 @@ const MCP_TOOLS = [
   },
   {
     name: 'slimweb_payment_logistics_update',
-    description: 'Update supported SlimWeb payment/logistics provider credentials and enabled state. Only ECPay or NewebPay can be the enabled online card provider at one time; LINE Pay is exempt.',
+    description: 'Update supported SlimWeb payment/logistics provider credentials and enabled state. ECPay, NewebPay and PayNow are mutually exclusive. Save a new provider without switching unless the user explicitly asks to switch, then set switch_primary_to. PayNow payment and logistics fields go together in payments. For bank transfer (offline), set bank_code and bank_account as strings and is_enabled to enable or disable. Use the merchant’s intended receiving account. Never display credentials or the full bank account in chat.',
     inputSchema: {
       type: 'object',
       properties: {
         site_id: { type: 'integer' },
+        switch_primary_to: { type: 'string', enum: ['ecpay', 'newebpay', 'paynow'], description: 'Only set when the user explicitly requests switching the active primary payment and logistics provider.' },
         payments: {
           type: 'array',
           items: {
             type: 'object',
             properties: {
-              provider: { type: 'string', enum: ['ecpay', 'newebpay', 'linepay'] },
+              provider: { type: 'string', enum: ['ecpay', 'newebpay', 'paynow', 'linepay', 'offline'] },
+              bank_code: { type: 'string', pattern: '^[0-9]{3}$', description: 'Bank transfer only. Three-digit receiving financial institution code. Preserve leading zeros.' },
+              bank_account: { type: 'string', pattern: '^[0-9]{1,32}$', description: 'Bank transfer only. Receiving account digits. Preserve leading zeros and omit to retain the saved value.' },
               mode: { type: 'string', enum: ['test', 'production'] },
               is_enabled: { type: 'boolean' },
               merchant_id: { type: 'string' },
+              transaction_password: { type: 'string', description: 'PayNow payment transaction password.' },
+              logistics_api_password: { type: 'string', description: 'PayNow logistics API password.' },
+              black_cat_enabled: { type: 'boolean', description: 'PayNow only. Enable Black Cat home delivery in the selected environment after confirming that the merchant account supports it. Customers choose ambient, refrigerated, or frozen at checkout.' },
+              sender_address: { type: 'string', description: 'PayNow Black Cat dispatch address.' },
+              seven_frozen_cod_enabled: { type: 'boolean', description: 'PayNow only. Enable 7-ELEVEN frozen pickup and pay for the selected environment after the merchant confirms PayNow cash collection is active. Requires seven_frozen in store_types.' },
+              store_types: { type: 'array', items: { type: 'string', enum: ['seven', 'family', 'hilife', 'ok', 'seven_frozen', 'family_frozen'] }, description: 'PayNow C2C channels enabled in the merchant account.' },
+              sender_name: { type: 'string' },
+              sender_phone: { type: 'string' },
+              sender_email: { type: 'string' },
               hash_key: { type: 'string' },
               hash_iv: { type: 'string' },
               language: { type: 'string', enum: ['zh-tw', 'zh-cn', 'en', 'jp', 'ko', 'th'] }
@@ -1137,8 +1155,8 @@ const MCP_TOOLS = [
               sender_address: { type: 'string' },
               store_types: {
                 type: 'array',
-                items: { type: 'string', enum: ['seven', 'family', 'hilife'] },
-                description: 'ECPay and NewebPay support seven/family/hilife. OK Mart logistics is no longer supported.'
+                items: { type: 'string', enum: ['seven', 'family', 'hilife', 'seven_frozen'] },
+                description: 'Use seven_frozen only for ECPay with logistics_type b2c.'
               },
               logistics_type: {
                 type: 'string',
@@ -1178,10 +1196,16 @@ const MCP_TOOLS = [
         site_id: { type: 'integer' },
         order_id: { type: 'integer' },
         order_no: { type: 'string' },
-        provider: { type: 'string', enum: ['ecpay', 'newebpay', 'hct'] },
-        store_type: { type: 'string', enum: ['seven', 'family', 'hilife'] },
+        provider: { type: 'string', enum: ['ecpay', 'newebpay', 'hct', 'paynow'] },
+        store_type: { type: 'string', enum: ['seven', 'family', 'hilife', 'seven_frozen', 'family_frozen'] },
         temperature: { type: 'string', enum: ['normal', 'refrigerated', 'frozen'] },
-        carrier: { type: 'string', enum: ['tcat', 'post'] }
+        carrier: { type: 'string', enum: ['tcat', 'post'] },
+        specification: { type: 'string', enum: ['0001', '0002', '0003', '0004'] },
+        packages: { type: 'integer', minimum: 1 },
+        weight: { type: 'number', exclusiveMinimum: 0, description: 'Parcel weight in kg when required by available_actions.' },
+        length: { type: 'number', exclusiveMinimum: 0, description: 'PayNow Black Cat parcel length in cm.' },
+        width: { type: 'number', exclusiveMinimum: 0, description: 'PayNow Black Cat parcel width in cm.' },
+        height: { type: 'number', exclusiveMinimum: 0, description: 'PayNow Black Cat parcel height in cm.' }
       },
       required: ['site_id', 'provider']
     }
@@ -4482,7 +4506,7 @@ async function handleMcpMessage(message, request, context) {
 
   switch (message?.method) {
     case 'server/discover':
-      return mcpResult(id, {resultType: 'complete', supportedVersions: ['2026-07-28', '2025-03-26'], capabilities: {tools: {}, resources: {}, events: {}}, _meta: {'io.modelcontextprotocol/serverInfo': {name: SERVICE_NAME, version: SERVICE_VERSION}}, instructions: 'For site.notification, display the notification in this chat only. Wait for a later explicit user instruction before calling tools or changing any order.'});
+      return mcpResult(id, {resultType: 'complete', supportedVersions: ['2026-07-28', '2025-03-26'], capabilities: {tools: {}, resources: {}, events: {}}, _meta: {'io.modelcontextprotocol/serverInfo': {name: SERVICE_NAME, version: SERVICE_VERSION}}, instructions: serverInstructions(context) + ' For site.notification, display the notification in this chat only. Wait for a later explicit user instruction before calling tools or changing any order.'});
     case 'events/list':
     case 'events/subscribe':
     case 'events/unsubscribe':
@@ -4499,6 +4523,7 @@ async function handleMcpMessage(message, request, context) {
             listChanged: false
           }
         },
+        instructions: serverInstructions(context),
         serverInfo: {
           name: SERVICE_NAME,
           version: SERVICE_VERSION
@@ -4521,6 +4546,12 @@ async function handleMcpMessage(message, request, context) {
       return mcpResult(id, {
         resources: [
           {
+            uri: MERCHANT_CAPABILITY_URI,
+            name: 'SlimWeb merchant capability map and business-language guide',
+            description: 'Native features, compositions, setup and Web-only boundaries; consult before declaring a business request unsupported. Current tools/list remains authoritative.',
+            mimeType: 'text/markdown'
+          },
+          {
             uri: MEMBER_EMAIL_PREVIEW_WIDGET_URI,
             name: 'SlimWeb member email preview',
             mimeType: 'text/html'
@@ -4535,6 +4566,9 @@ async function handleMcpMessage(message, request, context) {
 
     case 'resources/read': {
       const uri = String(message?.params?.uri ?? '');
+      if (uri === MERCHANT_CAPABILITY_URI) {
+        return mcpResult(id, { contents: [{ uri, mimeType: 'text/markdown', text: MERCHANT_CAPABILITY_GUIDE }] });
+      }
       if (![MEMBER_EMAIL_PREVIEW_WIDGET_URI, POSTER_PREVIEW_WIDGET_URI].includes(uri)) {
         return mcpError(id, -32602, `Unknown MCP resource: ${uri || 'undefined'}`);
       }
@@ -5088,7 +5122,7 @@ function handleServiceInfo(response, context) {
     service: SERVICE_NAME,
     version: SERVICE_VERSION,
     status: 'ready',
-    instructions: context.toolProfile.serverGuidelines ?? MCP_SERVER_GUIDELINES
+    instructions: serverInstructions(context)
   });
 }
 

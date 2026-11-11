@@ -118,9 +118,29 @@ test('logistics tools do not offer retired OK Mart', async () => {
   const payload = await requestMcp({ async listSitesForAdminIdentity() { return []; } }, {
     jsonrpc: '2.0', id: 1, method: 'tools/list'
   });
-  let checked = 0;
+  const settings = payload.result.tools.find(tool => tool.name === 'slimweb_payment_logistics_update');
+  const paynow = settings.inputSchema.properties.payments.items.properties;
+  const paynowChannels = paynow.store_types.items;
+  assert.ok(paynow.provider.enum.includes('offline'));
+  assert.equal(paynow.bank_code.pattern, '^[0-9]{3}$');
+  assert.equal(paynow.bank_account.pattern, '^[0-9]{1,32}$');
+  const ecpayChannels = settings.inputSchema.properties.logistics.items.properties.store_types.items;
+  assert.equal(paynow.black_cat_enabled.type, 'boolean');
+  assert.equal(paynow.sender_address.type, 'string');
+  assert.deepEqual(ecpayChannels.enum, ['seven', 'family', 'hilife', 'seven_frozen']);
+  assert.equal(settings.inputSchema.properties.payments.items.properties.seven_frozen_cod_enabled?.type, 'boolean');
+  assert.deepEqual(paynowChannels.enum, ['seven', 'family', 'hilife', 'ok', 'seven_frozen', 'family_frozen']);
+  assert.ok(settings.inputSchema.properties.switch_primary_to.enum.includes('paynow'));
+  const shipment = payload.result.tools.find(tool => tool.name === 'slimweb_orders_create_logistics');
+  const shipmentChannels = shipment.inputSchema.properties.store_type;
+  assert.ok(shipment.inputSchema.properties.provider.enum.includes('paynow'));
+  assert.deepEqual(shipmentChannels.enum, ['seven', 'family', 'hilife', 'seven_frozen', 'family_frozen']);
+  for (const field of ['weight', 'length', 'width', 'height']) {
+    assert.equal(shipment.inputSchema.properties[field].type, 'number');
+  }
+  let checked = 2; // Settings and forward shipment channels are checked above.
   function check(node) {
-    if (!node || typeof node !== 'object') return;
+    if (!node || typeof node !== 'object' || node === paynowChannels || node === shipmentChannels || node === ecpayChannels) return;
     if (Array.isArray(node.enum) && node.enum.includes('seven')) {
       checked++;
       assert.deepEqual(node.enum, ['seven', 'family', 'hilife']);
