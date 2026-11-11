@@ -4642,6 +4642,22 @@ async function handleMcp(request, response, context) {
       }
     }
 
+    // Lifecycle notifications have no JSON-RPC reply. Keep auth/resource checks above.
+    if (message?.method === 'notifications/initialized') {
+      const isNotification = !Object.hasOwn(message, 'id');
+      const validParams = message.params === undefined
+        || (message.params !== null && typeof message.params === 'object' && !Array.isArray(message.params));
+      if (message.jsonrpc !== '2.0' || !isNotification || !validParams) {
+        jsonResponse(response, isNotification ? 400 : 200, mcpError(
+          message.id ?? null, -32600, 'Invalid initialized notification: use JSON-RPC 2.0 without an id and optional object params'
+        ));
+        return;
+      }
+      response.writeHead(202, { 'cache-control': 'no-store' });
+      response.end();
+      return;
+    }
+
     const payload = await handleMcpMessage(message, request, context);
     const modern = message?.params?._meta?.['io.modelcontextprotocol/protocolVersion'] === '2026-07-28'
       || request.headers['mcp-protocol-version'] === '2026-07-28'
