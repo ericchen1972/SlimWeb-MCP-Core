@@ -19,7 +19,7 @@ test('the browser Google nonce challenge expires within two minutes', async () =
     assert.ok(challenge.expires_at <= Math.floor(Date.now() / 1000) + 120);
     assert.match(page.headers.get('set-cookie'), /Max-Age=120;/);
   }));
-async function fixture(run, options = {}) {
+async function fixture(run, options = {}, recordOverrides = {}) {
   const calls = [];
   const transport = {
     async bootstrap(input) {
@@ -40,6 +40,7 @@ async function fixture(run, options = {}) {
           expires_at: Math.floor(Date.now() / 1000) + 300,
           payload: { order_ids: [42] },
           preview: { count: 1 },
+          ...recordOverrides,
         },
       };
     },
@@ -81,6 +82,95 @@ test('ordinary Google client ID alone never enables the approval portal', async 
     },
     { humanApprovalGoogleClientId: '' },
   ));
+
+test('newsletter approval explains dynamic delivery-time audience in Chinese and English', async () => {
+  for (const language of ['zh-TW', 'en']) {
+    for (const operation of [
+      'slimweb_newsletters_create',
+      'slimweb_newsletters_update',
+    ]) {
+      await fixture(
+        async ({ request, calls }) => {
+          const session = await login(request);
+          const response = await request(path, {
+            headers: { cookie: session, 'accept-language': language },
+          });
+          assert.equal(response.status, 200);
+          const html = await response.text();
+          assert.match(
+            html,
+            language.startsWith('zh')
+              ? /寄送當下所有有效會員/
+              : /all active members at delivery time/,
+          );
+          assert.match(
+            html,
+            language.startsWith('zh')
+              ? /人數僅供參考/
+              : /count is informational/,
+          );
+          assert.match(
+            html,
+            language.startsWith('zh') ? /電子報/ : /newsletter/,
+          );
+          assert.match(html, /all_active_members_at_delivery/);
+          assert.match(html, /&lt;newsletter&gt;/);
+          assert.equal(calls.filter((call) => call[0] === 'decide').length, 0);
+        },
+        {},
+        {
+          operation,
+          payload: { title: '<newsletter>' },
+          preview: {
+            audience: 'all_active_members_at_delivery',
+            current_recipient_count: 42,
+          },
+        },
+      );
+    }
+  }
+});
+
+test('LINE approval distinguishes all friends from the frozen member list in both languages', async () => {
+  for (const language of ['zh-TW', 'en']) {
+    for (const audience of ['all', 'members']) {
+      await fixture(
+        async ({ request }) => {
+          const session = await login(request);
+          const response = await request(path, {
+            headers: { cookie: session, 'accept-language': language },
+          });
+          assert.equal(response.status, 200);
+          const html = await response.text();
+          const expected = language.startsWith('zh')
+            ? audience === 'all'
+              ? /LINE 所有好友/
+              : /準備時固定的會員收件名單/
+            : audience === 'all'
+              ? /all LINE friends/
+              : /member recipient list frozen at preparation/;
+          assert.match(html, expected);
+          assert.match(
+            html,
+            language.startsWith('zh')
+              ? /發送 LINE 群發訊息/
+              : /Send LINE push messages/,
+          );
+          assert.match(html, /slimweb_line_push_send/);
+          assert.doesNotMatch(
+            html,
+            /寄送當下所有有效會員|all active members at delivery time/,
+          );
+        },
+        {},
+        {
+          operation: 'slimweb_line_push_send',
+          preview: { audience, recipient_count: 42 },
+        },
+      );
+    }
+  }
+});
 function cookie(response) {
   return response.headers
     .getSetCookie()

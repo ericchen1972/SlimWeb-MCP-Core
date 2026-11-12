@@ -40,6 +40,11 @@ to use its existing client ID and tokens.
 3. A read-only page displays the fixed, escaped request and target preview, site
    identity, and the bound Standalone merchant domain. The person checks the
    operation, targets, amount, content, and schedule before choosing a decision.
+   For newsletters targeting all active members at delivery time, the page
+   explicitly explains that membership can change and the displayed count is
+   informational. LINE scopes distinguish all friends from the member recipient
+   list frozen at preparation. These localized explanations do not change the
+   immutable request, preview, digest, or backend delivery semantics.
 4. Approval or rejection requires a subsequent POST from the same hosted origin,
    the separate approval cookie, and its decision CSRF token. GET never decides.
    The backend rechecks identity, roles, expiry, target state, and one-use rules.

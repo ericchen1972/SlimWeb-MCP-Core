@@ -13,6 +13,40 @@ const escape = (value) =>
   );
 const js = (value) => JSON.stringify(value).replace(/</g, '\\u003c');
 const now = () => Math.floor(Date.now() / 1000);
+const OPERATION_LABELS = {
+  slimweb_refunds_create: ['建立退款', 'Create refund'],
+  slimweb_refunds_complete: ['完成退款', 'Complete refund'],
+  slimweb_orders_delete: ['刪除訂單', 'Delete orders'],
+  slimweb_invoices_void: ['作廢發票', 'Void invoice'],
+  slimweb_invoices_allowance: ['開立發票折讓', 'Create invoice allowance'],
+  slimweb_newsletters_create: ['建立電子報', 'Create newsletter'],
+  slimweb_newsletters_update: ['更新電子報', 'Update newsletter'],
+  slimweb_line_push_send: ['發送 LINE 群發訊息', 'Send LINE push messages'],
+};
+
+function audienceNotice(record, zh) {
+  const audience = record.preview?.audience;
+  if (
+    ['slimweb_newsletters_create', 'slimweb_newsletters_update'].includes(
+      record.operation,
+    ) &&
+    audience === 'all_active_members_at_delivery'
+  ) {
+    return zh
+      ? '此電子報會寄送給寄送當下所有有效會員；收件名單會隨會員狀態變動，畫面人數僅供參考，並非固定收件名單。'
+      : 'This newsletter will go to all active members at delivery time. The recipient list can change with member status. The displayed count is informational; it is not a frozen recipient list.';
+  }
+  if (record.operation === 'slimweb_line_push_send') {
+    if (audience === 'all')
+      return zh ? '發送範圍：LINE 所有好友。' : 'Audience: all LINE friends.';
+    if (audience === 'members')
+      return zh
+        ? '發送範圍：準備時固定的會員收件名單。'
+        : 'Audience: the member recipient list frozen at preparation.';
+  }
+  return '';
+}
+
 function equal(a, b) {
   return (
     typeof a === 'string' &&
@@ -49,7 +83,8 @@ function readCookie(request, name, secret, purpose, binding) {
       value.purpose !== purpose ||
       !Number.isInteger(value.expires_at) ||
       value.expires_at <= now() ||
-      value.expires_at > now() + (purpose === 'human_approval_challenge' ? 120 : 600)
+      value.expires_at >
+        now() + (purpose === 'human_approval_challenge' ? 120 : 600)
     )
       return null;
     if (Object.entries(binding).some(([k, v]) => value[k] !== v)) return null;
@@ -322,13 +357,16 @@ export function createHumanApprovalPortal(context) {
         const domain = binding.domain
           ? `<p>${zh ? '網站網域' : 'Merchant domain'}: <strong>${escape(binding.domain)}</strong></p>`
           : '';
+        const operationLabel =
+          OPERATION_LABELS[record.operation]?.[zh ? 0 : 1] ?? record.operation;
+        const notice = audienceNotice(record, zh);
         html(
           response,
           200,
           document(
             zh,
             title,
-            `<p>${text}</p><p>${escape(preview.site?.name)} (${escape(binding.site_code)})</p>${domain}<p>${escape(record.operation)} · ${escape(labels[record.status] ?? record.status)} · ${escape(new Date(record.expires_at * 1000).toISOString())}</p><pre>${escape(details)}</pre>${form}${loginAgain}`,
+            `<p>${text}</p><p>${escape(preview.site?.name)} (${escape(binding.site_code)})</p>${domain}<p>${escape(operationLabel)} (<code>${escape(record.operation)}</code>) · ${escape(labels[record.status] ?? record.status)} · ${escape(new Date(record.expires_at * 1000).toISOString())}</p>${notice ? `<p role="note">${escape(notice)}</p>` : ''}<pre>${escape(details)}</pre>${form}${loginAgain}`,
           ),
         );
         return true;
