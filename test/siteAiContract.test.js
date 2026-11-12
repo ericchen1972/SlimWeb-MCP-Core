@@ -1,18 +1,19 @@
+import {testServiceResolver} from './fixtures.js';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { test } from 'node:test';
 import { createRequestHandler } from '../src/app.js';
 import { BackendRepositoryError } from '../src/backendRepository.js';
-import { createSessionToken } from '../src/session.js';
+import { createTestServiceToken } from './fixtures.js';
 
 async function request(repository, method, params) {
   const secret = 'site-ai-contract-secret';
-  const server = createServer(createRequestHandler({ accountRepository: repository, sessionSecret: secret }));
+  const server = createServer(createRequestHandler({verifiedServiceIdentityResolver:testServiceResolver(secret), accountRepository: repository, sessionSecret: secret }));
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   try {
     const response = await fetch(`http://127.0.0.1:${server.address().port}/mcp`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', ...(method === 'tools/call' ? { authorization: `Bearer ${createSessionToken({ email: 'owner@example.com', google_id: 'owner' }, secret)}` } : {}) },
+      headers: { 'content-type': 'application/json', ...(method === 'tools/call' ? { authorization: `Bearer ${createTestServiceToken({ email: 'owner@example.com', google_id: 'owner' }, secret)}` } : {}) },
       body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params })
     });
     return response.json();

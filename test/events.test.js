@@ -1,14 +1,15 @@
+import {testServiceResolver} from './fixtures.js';
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {test} from 'node:test';
 import {createRequestHandler} from '../src/app.js';
-import {createSessionToken} from '../src/session.js';
+import {createTestServiceToken} from './fixtures.js';
 const secret='events-test-secret';
 async function run(repository,fn,options={}){
- const server=createServer(createRequestHandler({accountRepository:repository,sessionSecret:secret,...options}));
+ const server=createServer(createRequestHandler({verifiedServiceIdentityResolver:testServiceResolver(secret),accountRepository:repository,sessionSecret:secret,...options}));
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
  const call=async(method,params={},auth=true)=>{
- const r=await fetch(`http://127.0.0.1:${server.address().port}/mcp`,{method:'POST',headers:{'content-type':'application/json',...(auth?{authorization:`Bearer ${createSessionToken({email:'owner@example.com',google_id:'owner-sub'},secret)}`}:{})},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params})});
+ const r=await fetch(`http://127.0.0.1:${server.address().port}/mcp`,{method:'POST',headers:{'content-type':'application/json',...(auth?{authorization:`Bearer ${createTestServiceToken({email:'owner@example.com',google_id:'owner-sub'},secret)}`}:{})},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params})});
  return {status:r.status,body:await r.json()};};
  try{await fn(call);}finally{await new Promise(r=>server.close(r));}
 }

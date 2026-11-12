@@ -1,8 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import {
-  createSessionToken,
-  readSessionToken,
-  verifySessionToken,
+  credentialBinding, issueTokenFamily, readBrowserToken, verifyDurableToken,
+  rotateRefreshToken, revokeCredential,
 } from './session.js';
 
 const hash = (value) => createHash('sha256').update(value).digest('hex');
@@ -73,7 +72,7 @@ export async function handleOAuth(
 ) {
   const url = new URL(request.url, 'http://localhost');
   if (
-    !['/oauth/register', '/oauth/authorize', '/oauth/token'].includes(
+    !['/oauth/register', '/oauth/authorize', '/oauth/token', '/oauth/revoke'].includes(
       url.pathname,
     )
   )
@@ -119,7 +118,7 @@ export async function handleOAuth(
         client_id_issued_at: Math.floor(Date.now() / 1000),
         client_name: String(b.client_name || 'MCP Client').slice(0, 120),
         redirect_uris: [...new Set(b.redirect_uris)],
-        grant_types: ['authorization_code'],
+        grant_types: ['authorization_code', 'refresh_token'],
         response_types: ['code'],
         token_endpoint_auth_method: 'none',
       };
@@ -132,12 +131,32 @@ export async function handleOAuth(
       json(response, 201, client);
       return true;
     }
-    if (url.pathname === '/oauth/token') {
+    if (url.pathname === '/oauth/token' || url.pathname === '/oauth/revoke') {
       if (request.method !== 'POST') {
         fail(response, 405, 'invalid_request', 'POST required.');
         return true;
       }
       const b = await body(request);
+      const binding = {...credentialBinding(context, requestResourceContext(request)), client_id: b.client_id};
+      if (b.resource && b.resource !== binding.audience || b.scope && b.scope !== 'mcp') {
+        fail(response, 400, 'invalid_target', 'Resource and scope must match the authorized resource.'); return true;
+      }
+      if (url.pathname === '/oauth/revoke') {
+        if (!b.client_id || !(await store.get('client', hash(b.client_id)))) {
+          fail(response, 400, 'invalid_client', 'Registered client required.'); return true;
+        }
+        await revokeCredential(String(b.token ?? ''), binding, context);
+        json(response, 200, {}); return true;
+      }
+      if (b.grant_type === 'refresh_token') {
+        if (!b.client_id || !(await store.get('client', hash(b.client_id)))) {
+          fail(response, 400, 'invalid_grant', 'Registered client required.'); return true;
+        }
+        const pair = await rotateRefreshToken(String(b.refresh_token ?? ''), binding, context);
+        if (!pair) fail(response, 400, 'invalid_grant', 'Refresh token is invalid, expired or reused.');
+        else json(response, 200, pair);
+        return true;
+      }
       if (b.grant_type !== 'authorization_code') {
         fail(
           response,
@@ -155,6 +174,8 @@ export async function handleOAuth(
         !b.client_id ||
         b.client_id !== record.client_id ||
         b.redirect_uri !== record.redirect_uri ||
+        record.issuer !== binding.issuer || record.audience !== binding.audience ||
+        record.scope !== binding.scope || !context.resourceContext.equals(record.resource_context, binding.resource_context) ||
         typeof b.code_verifier !== 'string' ||
         !/^[A-Za-z0-9._~-]{43,128}$/.test(b.code_verifier) ||
         createHash('sha256').update(b.code_verifier).digest('base64url') !==
@@ -188,34 +209,15 @@ export async function handleOAuth(
         );
         return true;
       }
-      const accessToken = createSessionToken(
-        {
-          id: consumed.account_id,
-          email: consumed.email,
-          name: consumed.name,
-          google_id: consumed.google_id,
-        },
-        context.sessionSecret,
-        Date.now(),
-        {
-          resource_context: consumed.resource_context ?? null,
-          oauth_client_id: consumed.client_id,
-        },
-      );
-      json(response, 200, {
-        access_token: accessToken,
-        token_type: 'Bearer',
-        expires_in: 7 * 86400,
-        scope: 'mcp',
-      });
+      json(response, 200, await issueTokenFamily(consumed, binding, context));
       return true;
     }
     if (!['GET', 'POST'].includes(request.method)) {
       fail(response, 405, 'invalid_request', 'GET or POST required.');
       return true;
     }
-    const token = readSessionToken(request);
-    const session = verifySessionToken(token, context.sessionSecret);
+    const token = readBrowserToken(request);
+    const session = await verifyDurableToken(token, context, 'browser_session', requestResourceContext(request));
     let p;
     if (request.method === 'GET') {
       p = Object.fromEntries(url.searchParams);
@@ -227,6 +229,7 @@ export async function handleOAuth(
         p.code_challenge_method !== 'S256' ||
         !/^[A-Za-z0-9_-]{43}$/.test(p.code_challenge ?? '') ||
         (p.scope && p.scope !== 'mcp')
+        || (p.resource && p.resource !== credentialBinding(context, requestResourceContext(request)).audience)
       ) {
         fail(
           response,
@@ -266,6 +269,7 @@ export async function handleOAuth(
         google_id: session.google_id,
         site_id: session.site_id,
         resource_context: session.resource_context ?? null,
+        backend_grant: session.backend_grant,
       });
       const names = sites.map((s) => escape(s.name ?? s.site_code)).join(', ');
       const text = zh
@@ -351,6 +355,9 @@ export async function handleOAuth(
       const code = random();
       const record = {
         account_id: session.account_id,
+        backend_grant: session.backend_grant,
+        session_id: session.jti,
+        ...credentialBinding(context, requestResourceContext(request)),
         email: session.email,
         name: session.name,
         google_id: session.google_id,

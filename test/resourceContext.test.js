@@ -1,9 +1,11 @@
+import {testStore,testServiceResolver} from './fixtures.js';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { test } from 'node:test';
 
 import { createRequestHandler } from '../src/app.js';
-import { createSessionToken, verifySessionToken } from '../src/session.js';
+import { verifySignedToken } from '../src/session.js';
+import {createTestServiceToken} from './fixtures.js';
 
 function domainProvider(onValidate = async (value) => value) {
   return {
@@ -27,7 +29,7 @@ function domainProvider(onValidate = async (value) => value) {
 }
 
 async function withServer(options, run) {
-  const server = createServer(createRequestHandler(options));
+  const server = createServer(createRequestHandler({oauthStore:testStore(),verifiedServiceIdentityResolver:testServiceResolver('test-secret'),...options}));
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   try {
     await run(`http://127.0.0.1:${server.address().port}`);
@@ -45,14 +47,14 @@ const repository = {
   }
 };
 
-test('session tokens preserve signed resource context claims', () => {
-  const token = createSessionToken(
+test('explicit test service adapter preserves resource context claims', () => {
+  const token = createTestServiceToken(
     { email: 'owner@example.com', name: 'Owner', google_id: 'owner-sub' },
     'test-secret',
     1_700_000_000_000,
     { resource_context: 'shop.example.com' }
   );
-  const session = verifySessionToken(token, 'test-secret', 1_700_000_001_000);
+  const session = verifySignedToken(token, 'test-secret');
 
   assert.equal(session.resource_context, 'shop.example.com');
 });
@@ -94,17 +96,18 @@ test('Google login validates resource context before signing the session', async
       body: JSON.stringify({ credential: 'test' })
     });
     const payload = await response.json();
-    const session = verifySessionToken(payload.session.access_token, 'test-secret');
+    const session = verifySignedToken(decodeURIComponent(response.headers.get('set-cookie').split(';')[0].split('=')[1]), 'test-secret');
 
     assert.equal(response.status, 200);
     assert.equal(validated.value, 'shop.example.com');
     assert.equal(validated.identity.sub, 'owner-sub');
-    assert.equal(session.resource_context, 'shop.example.com');
+    assert.equal(session.typ, 'browser_session');
+    assert.deepEqual(payload.session, {authenticated:true});
   });
 });
 
 test('authenticated MCP rejects cross-context bearer reuse', async () => {
-  const token = createSessionToken(
+  const token = createTestServiceToken(
     { email: 'owner@example.com', name: 'Owner', google_id: 'owner-sub' },
     'test-secret',
     Date.now(),

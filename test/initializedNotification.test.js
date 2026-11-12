@@ -1,12 +1,13 @@
+import {testServiceResolver} from './fixtures.js';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { test } from 'node:test';
 import { createRequestHandler } from '../src/app.js';
 import { createToolProfile } from '../src/toolProfile.js';
-import { createSessionToken } from '../src/session.js';
+import { createTestServiceToken } from './fixtures.js';
 
 async function withServer(run, toolProfile, options = {}) {
-  const server = createServer(createRequestHandler({ accountRepository: {}, sessionSecret: 'initialized-test', toolProfile, ...options }));
+  const server = createServer(createRequestHandler({verifiedServiceIdentityResolver:testServiceResolver('initialized-test'), accountRepository: {}, sessionSecret: 'initialized-test', toolProfile, ...options }));
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const post = (message, headers = {}) => fetch(`http://127.0.0.1:${server.address().port}/mcp`, {method:'POST', headers:{'content-type':'application/json',accept:'application/json, text/event-stream',...headers},body:JSON.stringify(message)});
   try { await run(post); } finally { await new Promise(resolve => server.close(resolve)); }
@@ -61,7 +62,7 @@ test('initialized preserves authenticated resource binding before notification a
  const provider={parse:()=> 'second.example.com',equals:(a,b)=>a===b};
  await withServer(async post => {
   for(const [domain,status] of [['first.example.com',401],['second.example.com',202]]){
-   const token=createSessionToken({email:'owner@example.test',google_id:'test'},'initialized-test',Date.now(),{resource_context:domain});
+   const token=createTestServiceToken({email:'owner@example.test',google_id:'test'},'initialized-test',Date.now(),{resource_context:domain});
    const response=await post({jsonrpc:'2.0',method:'notifications/initialized'},{authorization:'Bearer '+token});
    assert.equal(response.status,status);
    if(status===401) assert.equal((await response.json()).error.data.reason,'DOMAIN_SESSION_MISMATCH');

@@ -45,6 +45,29 @@ export class SlimWebBackendRepository {
     });
   }
 
+  async bootstrapIdentity(input) {
+    if (typeof this.transport.bootstrapIdentity !== 'function') {
+      throw new BackendError('The backend must independently verify identity proof.', {code:'IDENTITY_BOOTSTRAP_REQUIRED',status:401});
+    }
+    const authority = await this.transport.bootstrapIdentity(input);
+    if (!authority?.backend_grant || !authority.profile?.sub || !authority.profile?.email) {
+      throw new BackendError('Backend identity authority is invalid.', {code:'IDENTITY_BOOTSTRAP_REQUIRED',status:401});
+    }
+    const profile = authority.profile;
+    const sites = await this.listSitesForAdminIdentity({
+      google_id:profile.sub,email:profile.email,name:profile.name,
+      backend_grant:authority.backend_grant,resource_context:input.resourceContext ?? null
+    });
+    return {profile,backend_grant:authority.backend_grant,sites};
+  }
+
+  async revokeIdentityGrant(identity) {
+    if (!identity.backend_grant || typeof this.transport.revokeIdentityGrant !== 'function') {
+      throw new BackendError('Backend identity revocation is unavailable.', {code:'IDENTITY_REVOCATION_REQUIRED',status:503});
+    }
+    return this.transport.revokeIdentityGrant(identity);
+  }
+
   async listThemesForAccountSite(actor, args) {
     return this.listThemes(actor, args);
   }

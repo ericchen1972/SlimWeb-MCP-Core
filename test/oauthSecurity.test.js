@@ -4,15 +4,11 @@ import { createServer } from 'node:http';
 import { createHash } from 'node:crypto';
 import { createRequestHandler } from '../src/app.js';
 import {
-  createSessionToken,
   createSignedToken,
-  verifySessionToken,
+  issueBrowserSession, verifySignedToken, verifyDurableToken, issueTokenFamily, credentialBinding,
 } from '../src/session.js';
 const secret = 'oauth-security-test';
-const session = createSessionToken(
-  { email: 'owner@example.com', google_id: 'owner' },
-  secret,
-);
+let session = '';
 function store() {
   const m = new Map();
   return {
@@ -30,7 +26,8 @@ function store() {
     },
   };
 }
-async function run(fn, shared = store()) {
+async function run(fn, shared = store(), options = {}) {
+  if (shared) session = await issueBrowserSession({email: 'owner@example.com', google_id: 'owner'}, {oauthStore:shared,sessionSecret:secret,publicBaseUrl:'',resourceContext:{resourceUrl:()=>'/mcp'}}, null);
   const server = createServer(
     createRequestHandler({
       accountRepository: {
@@ -46,6 +43,7 @@ async function run(fn, shared = store()) {
       },
       sessionSecret: secret,
       oauthStore: shared,
+      ...options,
     }),
   );
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
@@ -110,26 +108,12 @@ async function code(call, client) {
   assert.equal(r.status, 302);
   return new URL(r.headers.get('location')).searchParams.get('code');
 }
-test('authorization code cannot be a session and session type cannot be overridden', () => {
-  assert.equal(
-    verifySessionToken(
-      createSignedToken(
-        { typ: 'oauth_code', email: 'owner', exp: Date.now() / 1000 + 100 },
-        secret,
-      ),
-      secret,
-    ),
-    null,
-  );
-  assert.equal(
-    verifySessionToken(
-      createSessionToken({ email: 'owner' }, secret, Date.now(), {
-        typ: 'oauth_code',
-      }),
-      secret,
-    )?.typ,
-    'session',
-  );
+test('authorization codes and legacy sessions cannot authorize browser or API requests',async()=>{
+  const context={sessionSecret:secret,oauthStore:store(),publicBaseUrl:'',resourceContext:{resourceUrl:()=>'/mcp',equals:(a,b)=>a===b}};
+  for(const typ of ['oauth_code','session']) {
+    const token=createSignedToken({typ,email:'owner',exp:Date.now()/1000+7*86400},secret);
+    for(const purpose of ['browser_session','access']) assert.equal(await verifyDurableToken(token,context,purpose,null),null);
+  }
 });
 test('OAuth rejects unknown redirect and optional or plain PKCE before login', async () =>
   run(async (call) => {
@@ -188,7 +172,9 @@ test('OAuth consent, strict client binding, code replay and direct code use', as
     ]);
     assert.deepEqual(responses.map((r) => r.status).sort(), [200, 400]);
     const good = await responses.find((r) => r.status === 200).json();
-    assert.equal(verifySessionToken(good.access_token, secret)?.typ, 'session');
+    assert.equal(verifySignedToken(good.access_token, secret)?.typ, 'access');
+    assert.equal(good.expires_in, 900);
+    assert.ok(good.refresh_token);
   }));
 test('OAuth consent rejects CSRF, cannot alter redirect, supports denial and is single use', async () =>
   run(async (call) => {
@@ -237,7 +223,7 @@ test('OAuth refuses operation without persistent store', async () =>
       503,
     );
   }, null));
-+test('registered clients and codes work across fresh handler instances', async () => {
+test('registered clients and codes work across fresh handler instances', async () => {
   const shared = store();
   let client, authorizationCode;
   await run(async (call) => {
@@ -278,10 +264,7 @@ test('consent belongs to the originating session and expires before approval', a
   await run(async (call) => {
     const client = await register(call);
     const token = await consent(call, client);
-    const other = createSessionToken(
-      { email: 'other@example.com', google_id: 'other' },
-      secret,
-    );
+    const other = await issueBrowserSession({email:'other@example.com',google_id:'other'},{oauthStore:shared,sessionSecret:secret,publicBaseUrl:'',resourceContext:{resourceUrl:()=>'/mcp'}},null);
     assert.equal(
       (
         await call('/oauth/authorize', {
@@ -347,4 +330,58 @@ test('code expiry and unsafe client registration are rejected', async () => {
       400,
     );
   }, shared);
+});
+
+test('HTTP access stays distinct from browser cookies; rotation replay and revocation invalidate events and tools', async () => run(async call => {
+  const client = await register(call);
+  const exchange = async () => (await call('/oauth/token', post({grant_type:'authorization_code', code:await code(call,client), client_id:client, redirect_uri:redirect, code_verifier:verifier}))).json();
+  const invoke = (token, method='events/list') => call('/mcp', {method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+token},body:JSON.stringify({jsonrpc:'2.0',id:1,method})});
+  assert.equal((await invoke(session)).status,401);
+  const first = await exchange();
+  assert.equal((await invoke(first.access_token)).status,200);
+  const rotate = token => call('/oauth/token',post({grant_type:'refresh_token',refresh_token:token,client_id:client}));
+  const rotated = await (await rotate(first.refresh_token)).json();
+  assert.ok(rotated.refresh_token);
+  assert.notEqual(rotated.refresh_token,first.refresh_token);
+  assert.equal((await rotate(first.refresh_token)).status,400);
+  assert.equal((await invoke(rotated.access_token)).status,401);
+  const second = await exchange();
+  assert.equal((await call('/oauth/revoke',post({token:second.refresh_token,client_id:client}))).status,200);
+  assert.equal((await invoke(second.access_token,'tools/list')).status,401);
+  assert.equal((await call('/oauth/revoke',post({token:'unknown',client_id:client}))).status,200);
+}));
+
+test('logout durably revokes browser session and all linked access and refresh credentials',async()=>run(async call=>{
+  const client=await register(call), c=await code(call,client);
+  const pair=await (await call('/oauth/token',post({grant_type:'authorization_code',code:c,client_id:client,redirect_uri:redirect,code_verifier:verifier}))).json();
+  assert.equal((await call('/auth/success',{headers:{cookie:'swmcp_session='+session}})).status,200);
+  const logout=await call('/auth/logout',post({}));
+  assert.equal(logout.status,200); assert.match(logout.headers.get('set-cookie'),/Max-Age=0/);
+  assert.equal((await call('/auth/success',{headers:{cookie:'swmcp_session='+session}})).status,302);
+  assert.equal((await call('/oauth/token',post({grant_type:'refresh_token',refresh_token:pair.refresh_token,client_id:client}))).status,400);
+  assert.equal((await call('/mcp',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+pair.access_token},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'events/list'})})).status,401);
+}));
+
+test('revocation is a silent no-op outside the exact authorized resource binding',async()=>{
+  const shared=store(), publicBaseUrl='https://mcp.example';
+  const resourceContext={parse:url=>url.searchParams.get('domain'),equals:(a,b)=>a===b,resourceUrl:(base,domain)=>base+'/mcp?domain='+encodeURIComponent(domain),appendToUrl:(path,domain)=>path+'?domain='+encodeURIComponent(domain)};
+  const context={oauthStore:shared,sessionSecret:secret,publicBaseUrl,resourceContext};
+  await run(async call=>{
+    const client=await register(call);
+    const invoke=token=>call('/mcp?domain=shop-a.example',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+token},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'events/list'})});
+    for(const kind of ['access_token','refresh_token']) {
+      const pair=await issueTokenFamily({email:'owner@example.com'}, {client_id:client,...credentialBinding(context,'shop-a.example')},context);
+      const mismatch=await call('/oauth/revoke?domain=shop-b.example',post({token:pair[kind],client_id:client}));
+      assert.equal(mismatch.status,200);
+      assert.deepEqual(await mismatch.json(),{});
+      assert.equal((await invoke(pair.access_token)).status,200);
+      const revoked=await call('/oauth/revoke?domain=shop-a.example',post({token:pair[kind],client_id:client}));
+      assert.equal(revoked.status,200);
+      assert.deepEqual(await revoked.json(),{});
+      assert.equal((await invoke(pair.access_token)).status,401);
+    }
+    const unknown=await call('/oauth/revoke?domain=shop-b.example',post({token:'unknown',client_id:client}));
+    assert.equal(unknown.status,200);
+    assert.deepEqual(await unknown.json(),{});
+  },shared,{publicBaseUrl,resourceContext});
 });

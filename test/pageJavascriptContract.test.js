@@ -1,19 +1,20 @@
+import {testServiceResolver} from './fixtures.js';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { test } from 'node:test';
 
 import { createRequestHandler } from '../src/app.js';
 import { BackendRepositoryError } from '../src/backendRepository.js';
-import { createSessionToken } from '../src/session.js';
+import { createTestServiceToken } from './fixtures.js';
 
 async function requestMcp(repository, body, authenticated = false) {
-  const server = createServer(createRequestHandler({
+  const server = createServer(createRequestHandler({verifiedServiceIdentityResolver:testServiceResolver('page-javascript-secret'),
     accountRepository: repository,
     sessionSecret: 'page-javascript-secret'
   }));
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   try {
-    const token = createSessionToken(
+    const token = createTestServiceToken(
       { email: 'owner@example.com', name: 'Owner', google_id: 'owner-sub' },
       'page-javascript-secret'
     );

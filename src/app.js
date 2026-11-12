@@ -12,11 +12,10 @@ import { INVOICE_TOOLS, INVOICE_METHODS } from './invoiceTools.js';
 import path from 'node:path';
 
 import { GoogleIdentityVerifier } from './googleVerifier.js';
+import { resolveRuntimeConfig } from './runtimeConfig.js';
 import {
-  createSessionToken,
-  readSessionToken,
   sessionCookie,
-  verifySessionToken
+  issueBrowserSession, verifyDurableToken, readBrowserToken, logoutBrowserSession
 } from './session.js';
 import { createToolProfile } from './toolProfile.js';
 import { createNullResourceContext, resourceContextMismatchError } from './resourceContext.js';
@@ -2911,6 +2910,7 @@ function hasAnyPermission(permissions, required) {
 
 function sessionIdentity(session) {
   return {
+    backend_grant: session.backend_grant ?? null,
     account_id: session.account_id ?? null,
     email: session.email,
     name: session.name,
@@ -3002,7 +3002,7 @@ async function actorForTool(session, name, args, context) {
 
 async function toolResultForCall(message, request, context) {
   const name = message?.params?.name;
-  const session = verifySessionToken(readSessionToken(request), context.sessionSecret);
+  const session = request.slimwebVerifiedIdentity ?? null;
 
   if (!session) {
     return mcpError(message?.id ?? null, -32001, 'Authentication required.', {
@@ -4507,7 +4507,7 @@ async function handleMcpMessage(message, request, context) {
     case 'events/list':
     case 'events/subscribe':
     case 'events/unsubscribe':
-      return handleEventMethod(message, sessionIdentity(verifySessionToken(readSessionToken(request), context.sessionSecret)), context);
+      return handleEventMethod(message, sessionIdentity(request.slimwebVerifiedIdentity), context);
 
     case 'initialize':
       return mcpResult(id, {
@@ -4530,7 +4530,7 @@ async function handleMcpMessage(message, request, context) {
     case 'tools/list':
       return mcpResult(id, {
         tools: await toolsForSession(
-          verifySessionToken(readSessionToken(request), context.sessionSecret),
+          request.slimwebVerifiedIdentity,
           context,
           request
         )
@@ -4617,10 +4617,20 @@ async function handleMcp(request, response, context) {
 
   try {
     const message = await readJsonRequest(request);
-    const session = verifySessionToken(readSessionToken(request), context.sessionSecret);
+    const authorization = String(request.headers.authorization ?? '');
+    const token = /^Bearer /i.test(authorization) ? authorization.slice(7).trim() : '';
+    let session;
+    try {
+      const trusted = context.verifiedServiceIdentityResolver ? await context.verifiedServiceIdentityResolver(request) : null;
+      session = trusted ?? await verifyDurableToken(token, context, 'access', requestResourceContext(request));
+    } catch {
+      jsonResponse(response, 503, mcpError(message?.id ?? null, -32001, 'Authentication storage is unavailable.'));
+      return;
+    }
+    request.slimwebVerifiedIdentity = session;
     logMcpRequest(request, message, Boolean(session));
 
-    if ((message?.method === 'tools/call' || message?.method?.startsWith('events/')) && !session) {
+    if ((token || message?.method === 'tools/call' || message?.method?.startsWith('events/')) && !session) {
       mcpAuthRequiredResponse(request, response, context);
       return;
     }
@@ -4746,8 +4756,9 @@ function oauthAuthorizationServerMetadata(baseUrl) {
     authorization_endpoint: `${baseUrl}/oauth/authorize`,
     token_endpoint: `${baseUrl}/oauth/token`,
     registration_endpoint: `${baseUrl}/oauth/register`,
+    revocation_endpoint: `${baseUrl}/oauth/revoke`,
     response_types_supported: ['code'],
-    grant_types_supported: ['authorization_code'],
+    grant_types_supported: ['authorization_code', 'refresh_token'],
     code_challenge_methods_supported: ['S256'],
     token_endpoint_auth_methods_supported: ['none'],
     scopes_supported: ['mcp'],
@@ -4861,14 +4872,30 @@ async function handleGoogleLogin(request, response, context) {
     return;
   }
 
+  const contentType = String(request.headers['content-type'] ?? '').split(';', 1)[0].trim().toLowerCase();
+  const origin = request.headers.origin;
+  let canonicalOrigin = context.publicBaseUrl;
+  if (!canonicalOrigin) {
+    // Production always supplies publicBaseUrl; explicit local modes use the direct request origin.
+    try { canonicalOrigin = new URL(request.url, `${request.socket?.encrypted ? 'https' : 'http'}://${request.headers.host}`).origin; }
+    catch { canonicalOrigin = ''; }
+  }
+  if (contentType !== 'application/json' || (origin !== undefined && origin !== canonicalOrigin)) {
+    jsonResponse(response, 403, {ok: false, error: {code: 'LOGIN_REQUEST_REJECTED', message: 'Same-origin JSON login is required.'}});
+    return;
+  }
+
   try {
     const body = await readJsonRequest(request);
-    const profile = await context.googleVerifier.verify(body.credential);
+    let profile = await context.googleVerifier.verify(body.credential);
     const resourceContext = await context.resourceContext.validateAfterIdentity(
       requestResourceContext(request),
       profile
     );
-    const sites = await context.accountRepository.listAdminSitesForGoogleProfile({
+    const bootstrap = typeof context.accountRepository.bootstrapIdentity === 'function'
+      ? await context.accountRepository.bootstrapIdentity({credential: body.credential, profile, resourceContext}) : null;
+    if (bootstrap?.profile) profile = bootstrap.profile;
+    const sites = bootstrap?.sites ?? await context.accountRepository.listAdminSitesForGoogleProfile({
       ...profile,
       resource_context: resourceContext
     });
@@ -4879,13 +4906,12 @@ async function handleGoogleLogin(request, response, context) {
       throw error;
     }
 
-    const token = createSessionToken({
+    const token = await issueBrowserSession({
       email: profile.email,
       name: profile.name,
-      google_id: profile.sub
-    }, context.sessionSecret, Date.now(), {
-      resource_context: resourceContext
-    });
+      google_id: profile.sub,
+      backend_grant: bootstrap?.backend_grant ?? null
+    }, context, resourceContext);
 
     jsonResponse(response, 200, {
       ok: true,
@@ -4895,10 +4921,7 @@ async function handleGoogleLogin(request, response, context) {
         google_id: profile.sub
       },
       sites,
-      session: {
-        token_type: 'Bearer',
-        access_token: token
-      }
+      session: { authenticated: true }
     }, {
       'set-cookie': sessionCookie(token, context.secureCookies)
     });
@@ -4918,9 +4941,9 @@ async function handleGoogleLogin(request, response, context) {
   }
 }
 
-function handleAuthSuccess(request, response, context) {
-  const token = readSessionToken(request);
-  const session = verifySessionToken(token, context.sessionSecret);
+async function handleAuthSuccess(request, response, context) {
+  const token = readBrowserToken(request);
+  const session = await verifyDurableToken(token, context, 'browser_session', requestResourceContext(request));
 
   if (!session) {
     response.writeHead(302, { location: contextualUrl('/auth/login', requestResourceContext(request), context) });
@@ -4974,22 +4997,27 @@ function handleServiceInfo(response, context) {
 }
 
 function createDefaultContext(options = {}) {
+  const runtimeConfig = resolveRuntimeConfig(options);
+  if (options.requireResourceContext && !['parse', 'validateAfterIdentity', 'equals', 'appendToUrl', 'resourceUrl'].every(key => typeof options.resourceContext?.[key] === 'function')) {
+    throw new TypeError('A complete resourceContext adapter is required.');
+  }
   if (!options.accountRepository) {
     throw new TypeError('accountRepository is required.');
   }
 
   return {
-    googleClientId: options.googleClientId ?? process.env.GOOGLE_CLIENT_ID ?? '27587628711-upin8ch154kqrl88k41978q660oc0pbg.apps.googleusercontent.com',
-    googleVerifier: options.googleVerifier ?? new GoogleIdentityVerifier(options),
+    googleClientId: runtimeConfig.googleClientId,
+    googleVerifier: options.googleVerifier ?? new GoogleIdentityVerifier({...options, clientId: runtimeConfig.googleClientId}),
     accountRepository: options.accountRepository,
     toolProfile: options.toolProfile ?? createToolProfile(),
     toolProfileResolver: options.toolProfileResolver ?? null,
     eventsResolver: options.eventsResolver ?? null,
     resourceContext: options.resourceContext ?? createNullResourceContext(),
     oauthStore: options.oauthStore ?? null,
+    verifiedServiceIdentityResolver: options.verifiedServiceIdentityResolver ?? null,
     sessionSecret: options.sessionSecret ?? process.env.MCP_SESSION_SECRET,
-    publicBaseUrl: options.publicBaseUrl ?? process.env.PUBLIC_BASE_URL ?? '',
-    secureCookies: options.secureCookies ?? process.env.NODE_ENV === 'production'
+    publicBaseUrl: runtimeConfig.publicBaseUrl,
+    secureCookies: runtimeConfig.secureCookies
   };
 }
 
@@ -5046,7 +5074,22 @@ export function createRequestHandler(options = {}) {
         return;
       }
 
-      handleAuthSuccess(request, response, context);
+      try { await handleAuthSuccess(request, response, context); }
+      catch { jsonResponse(response, 503, {ok: false, error: {code: 'AUTH_STORAGE_UNAVAILABLE'}}); }
+      return;
+    }
+
+    if (url.pathname === '/auth/logout') {
+      if (request.method !== 'POST') { methodNotAllowed(response); return; }
+      const origin = request.headers.origin;
+      if (origin && origin !== context.publicBaseUrl) { jsonResponse(response, 403, {ok: false}); return; }
+      try {
+        const browserToken = readBrowserToken(request);
+        const identity = await verifyDurableToken(browserToken, context, 'browser_session', requestResourceContext(request));
+        if (identity && typeof context.accountRepository.revokeIdentityGrant === 'function') await context.accountRepository.revokeIdentityGrant(identity);
+        await logoutBrowserSession(browserToken, context, requestResourceContext(request));
+        jsonResponse(response, 200, {ok: true}, {'set-cookie': 'swmcp_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0' + (context.secureCookies ? '; Secure' : '')});
+      } catch { jsonResponse(response, 503, {ok: false}); }
       return;
     }
 
