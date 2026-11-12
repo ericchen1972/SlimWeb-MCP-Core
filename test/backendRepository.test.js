@@ -59,11 +59,11 @@ test('backend repository maps Batch 1 reads to the shared resource contract', as
     ['GET', '/internal/mcp/v1/sites', 'slimweb_sites_list', 'backend_ai_assistant'],
     ['POST', '/internal/mcp/v1/site-context/resolve', 'slimweb_site_select', 'backend_ai_assistant'],
     ['GET', '/internal/mcp/v1/sites/swcb_demo/settings/basic', 'slimweb_settings_get', 'basic_settings'],
-    ['GET', '/internal/mcp/v1/sites/swcb_demo/operations/readiness?include_optional=true', 'slimweb_site_readiness_get', ''],
-    ['GET', '/internal/mcp/v1/sites/swcb_demo/operations/launch-progress', 'slimweb_site_launch_progress_get', ''],
+    ['GET', '/internal/mcp/v1/sites/swcb_demo/operations/readiness?include_optional=true', 'slimweb_site_readiness_get', 'backend_ai_assistant'],
+    ['GET', '/internal/mcp/v1/sites/swcb_demo/operations/launch-progress', 'slimweb_site_launch_progress_get', 'backend_ai_assistant'],
     ['GET', '/internal/mcp/v1/sites/swcb_demo/settings/seo', 'slimweb_seo_settings_get', 'seo_settings'],
     ['GET', '/internal/mcp/v1/sites/swcb_demo/settings/contact', 'slimweb_contact_settings_get', 'basic_settings'],
-    ['GET', '/internal/mcp/v1/sites/swcb_demo/operations/dashboard-summary', 'slimweb_dashboard_summary', ''],
+    ['GET', '/internal/mcp/v1/sites/swcb_demo/operations/dashboard-summary', 'slimweb_dashboard_summary', 'backend_ai_assistant'],
     ['GET', '/internal/mcp/v1/sites/swcb_demo/operations/admins', 'slimweb_admins_list', 'system_admin']
   ]);
 });
@@ -109,7 +109,7 @@ test('backend repository sends one synchronous member email with explicit cc and
     path: '/internal/mcp/v1/sites/swcb_demo/communications/member-email',
     identity: actor,
     tool: 'slimweb_member_email_send',
-    permission: 'member_management',
+    permission: 'member_list',
     body: {
       member_ids: [7],
       cc_emails: ['copy@example.com'],
@@ -146,7 +146,7 @@ test('theme repository clones only explicit custom sources and blocks literal De
     path: '/internal/mcp/v1/sites/swcb_demo/themes',
     identity: actor,
     tool: 'slimweb_themes_create_from_theme',
-    permission: 'page_management_templates',
+    permission: 'main_page_management',
     idempotencyKey: 'theme-idempotency-001',
     body: { source_theme_id: 44, name: 'Next theme' }
   });

@@ -1,0 +1,1422 @@
+{
+  "version": 1,
+  "operations": {
+    "slimweb_themes_list": {
+      "any": [
+        "main_page_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_site_theme_mode_get": {
+      "any": [
+        "main_page_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_design_context_get": {
+      "any": [
+        "main_page_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_site_theme_mode_update": {
+      "any": [
+        "main_page_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_themes_create_from_default": {
+      "any": [
+        "main_page_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_themes_create_from_theme": {
+      "any": [
+        "main_page_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_themes_activate": {
+      "any": [
+        "main_page_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_themes_delete": {
+      "any": [
+        "main_page_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_theme_shell_get_context": {
+      "any": [
+        "main_page_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_themes_update_root_elements": {
+      "any": [
+        "main_page_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_theme_style_profile_get": {
+      "any": [
+        "main_page_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_theme_style_profile_upsert": {
+      "any": [
+        "main_page_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_theme_style_profile_append_request": {
+      "any": [
+        "main_page_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_site_readiness_get": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_site_launch_progress_get": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_seo_settings_get": {
+      "any": [
+        "seo_settings"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_seo_settings_update": {
+      "any": [
+        "seo_settings"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_facebook_settings_get": {
+      "any": [
+        "integration_settings"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_facebook_settings_update": {
+      "any": [
+        "integration_settings"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_notion_settings_get": {
+      "any": [
+        "integration_settings"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_notion_settings_update": {
+      "any": [
+        "integration_settings"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_notion_pages_search": {
+      "any": [
+        "integration_settings"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_notion_page_get_content": {
+      "any": [
+        "integration_settings"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_contact_settings_get": {
+      "any": [
+        "basic_settings"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_contact_settings_update": {
+      "any": [
+        "basic_settings"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_mail_delivery_settings_get": {
+      "any": [
+        "mail_settings"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_mail_delivery_settings_update": {
+      "any": [
+        "mail_settings"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_mail_templates_get": {
+      "any": [
+        "mail_settings"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_mail_templates_update": {
+      "any": [
+        "mail_settings"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_mail_layout_get": {
+      "any": [
+        "mail_settings"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_mail_layout_update": {
+      "any": [
+        "mail_settings"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_payment_logistics_get": {
+      "any": [
+        "payments_shipping"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_payment_logistics_update": {
+      "any": [
+        "payments_shipping"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_line_bot_settings_get": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant",
+        "integration_settings"
+      ]
+    },
+    "slimweb_line_bot_settings_update": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant",
+        "integration_settings"
+      ]
+    },
+    "slimweb_line_ai_settings_get": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant",
+        "integration_settings"
+      ]
+    },
+    "slimweb_line_ai_settings_update": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant",
+        "integration_settings"
+      ]
+    },
+    "slimweb_line_rich_menus_list": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant",
+        "integration_settings"
+      ]
+    },
+    "slimweb_line_rich_menus_get": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant",
+        "integration_settings"
+      ]
+    },
+    "slimweb_line_rich_menus_create": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant",
+        "integration_settings"
+      ]
+    },
+    "slimweb_line_rich_menus_publish": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant",
+        "integration_settings"
+      ]
+    },
+    "slimweb_line_rich_menus_delete": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant",
+        "integration_settings"
+      ]
+    },
+    "slimweb_line_bot_qrcode_get": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant",
+        "integration_settings"
+      ]
+    },
+    "slimweb_line_friends_stats": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant",
+        "integration_settings",
+        "member_list"
+      ]
+    },
+    "slimweb_line_members_list": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant",
+        "integration_settings",
+        "member_list"
+      ]
+    },
+    "slimweb_line_push_prepare": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant",
+        "integration_settings",
+        "member_list"
+      ],
+      "requiresWhen": [
+        {
+          "array": "messages",
+          "key": "product_id",
+          "operation": "slimweb_products_get"
+        }
+      ]
+    },
+    "slimweb_line_push_send": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant",
+        "integration_settings",
+        "member_list"
+      ]
+    },
+    "slimweb_line_push_status": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant",
+        "integration_settings",
+        "member_list"
+      ]
+    },
+    "slimweb_invoice_settings_get": {
+      "any": [
+        "payments_shipping"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_invoice_settings_update": {
+      "any": [
+        "payments_shipping"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_invoices_list": {
+      "any": [
+        "invoices_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_invoices_get": {
+      "any": [
+        "invoices_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_invoices_create": {
+      "any": [
+        "invoices_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_invoices_issue": {
+      "any": [
+        "invoices_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_invoices_sync": {
+      "any": [
+        "invoices_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_invoices_void": {
+      "any": [
+        "invoices_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_invoices_allowance": {
+      "any": [
+        "invoices_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_orders_list": {
+      "any": [
+        "orders_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_orders_profit_statistics": {
+      "any": [
+        "orders_management",
+        "order_profit_statistics"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_orders_get": {
+      "any": [
+        "orders_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_orders_create_logistics": {
+      "any": [
+        "orders_management",
+        "payments_shipping"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_orders_mark_shipped": {
+      "any": [
+        "orders_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_orders_update_status": {
+      "any": [
+        "orders_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_orders_update_recipient": {
+      "any": [
+        "orders_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_orders_delete": {
+      "any": [
+        "orders_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_orders_get_waybill_url": {
+      "any": [
+        "orders_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_returns_get_waybill_url": {
+      "any": [
+        "returns_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_returns_pending_list": {
+      "any": [
+        "returns_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_returns_create_logistics": {
+      "any": [
+        "returns_management",
+        "payments_shipping"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_returns_cancel": {
+      "any": [
+        "returns_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_returns_complete": {
+      "any": [
+        "returns_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_refunds_complete": {
+      "any": [
+        "returns_management",
+        "orders_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_refunds_create": {
+      "any": [
+        "returns_management",
+        "orders_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_dashboard_summary": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_settings_get": {
+      "any": [
+        "basic_settings"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_settings_update": {
+      "any": [
+        "basic_settings"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_admins_list": {
+      "any": [
+        "system_admin"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_admins_upsert": {
+      "any": [
+        "system_admin"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_admins_delete": {
+      "any": [
+        "system_admin"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_external_assets_list": {
+      "any": [
+        "asset_library"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_external_assets_delete": {
+      "any": [
+        "asset_library"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_images_import_chatgpt_attachment": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_debug_attachment_refs": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_uploads_create": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_uploads_commit": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_media_library_stats": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_media_library_delete_unused": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_articles_list": {
+      "any": [
+        "article_list"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_articles_check_title": {
+      "any": [
+        "article_list"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_articles_get_content": {
+      "any": [
+        "article_list"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_articles_create": {
+      "any": [
+        "article_list"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_articles_update": {
+      "any": [
+        "article_list"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_articles_delete": {
+      "any": [
+        "article_list"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_content_seo_update": {
+      "any": [
+        "main_page_management",
+        "article_list"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_categories_list": {
+      "any": [
+        "category_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_categories_upsert": {
+      "any": [
+        "category_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_categories_delete": {
+      "any": [
+        "category_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_nav_items_list": {
+      "any": [
+        "navbar_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_nav_items_upsert": {
+      "any": [
+        "navbar_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_nav_items_delete": {
+      "any": [
+        "navbar_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_products_list": {
+      "any": [
+        "product_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_products_get": {
+      "any": [
+        "product_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_products_upsert": {
+      "any": [
+        "product_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_products_delete": {
+      "any": [
+        "product_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_members_delete": {
+      "any": [
+        "member_list"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_members_coupons_revoke": {
+      "any": [
+        "member_list"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_newsletters_list": {
+      "any": [
+        "newsletter_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_newsletters_get": {
+      "any": [
+        "newsletter_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_newsletters_update": {
+      "any": [
+        "newsletter_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_newsletters_delete": {
+      "any": [
+        "newsletter_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_discount_codes_delete": {
+      "any": [
+        "discount_code_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_member_tiers_delete": {
+      "any": [
+        "member_levels"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_threshold_gifts_delete": {
+      "any": [
+        "threshold_gift_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_product_add_ons_delete": {
+      "any": [
+        "add_on_product_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_customer_service_logs_delete": {
+      "any": [
+        "customer_service_logs"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_products_import_inspect": {
+      "any": [
+        "product_import"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_products_import_validate": {
+      "any": [
+        "product_import"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_products_import_commit": {
+      "any": [
+        "product_import"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_coupon_templates_list": {
+      "any": [
+        "coupon_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_coupon_templates_upsert": {
+      "any": [
+        "coupon_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_members_coupons_issue": {
+      "any": [
+        "coupon_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_members_list": {
+      "any": [
+        "member_list"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_members_get": {
+      "any": [
+        "member_list"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_member_email_preview": {
+      "any": [
+        "member_list"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_member_email_send": {
+      "any": [
+        "member_list"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_newsletters_create": {
+      "any": [
+        "newsletter_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_posters_create": {
+      "any": [
+        "ai_integration_settings"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_discount_codes_list": {
+      "any": [
+        "discount_code_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_discount_codes_upsert": {
+      "any": [
+        "discount_code_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_member_tiers_list": {
+      "any": [
+        "member_levels"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_member_tiers_upsert": {
+      "any": [
+        "member_levels"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_threshold_gifts_list": {
+      "any": [
+        "threshold_gift_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_threshold_gifts_upsert": {
+      "any": [
+        "threshold_gift_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_product_add_ons_list": {
+      "any": [
+        "add_on_product_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_product_add_ons_upsert": {
+      "any": [
+        "add_on_product_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_customer_service_logs_list": {
+      "any": [
+        "customer_service_logs"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_customer_service_settings_get": {
+      "any": [
+        "ai_customer_service"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_customer_service_settings_update": {
+      "any": [
+        "ai_customer_service"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_exports_create": {
+      "any": [
+        "system_admin"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_audit_list": {
+      "any": [
+        "system_admin"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_assets_upload": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_pages_list": {
+      "any": [
+        "main_page_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_pages_check_title": {
+      "any": [
+        "main_page_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_pages_get_content": {
+      "any": [
+        "main_page_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_pages_create": {
+      "any": [
+        "main_page_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_pages_update": {
+      "any": [
+        "main_page_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_preview_get_page_url": {
+      "any": [
+        "main_page_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_pages_delete": {
+      "any": [
+        "main_page_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_auth_status": {
+      "any": [],
+      "all": []
+    },
+    "slimweb_sites_list": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_site_select": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "events/subscribe": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant",
+        "orders_management",
+        "returns_management"
+      ]
+    },
+    "events/unsubscribe": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_product_image_reference_prepare": {
+      "any": [
+        "product_management"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_posters_get": {
+      "any": [
+        "ai_integration_settings"
+      ],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    },
+    "slimweb_uploads_put": {
+      "any": [],
+      "all": [
+        "backend_ai_assistant"
+      ]
+    }
+  },
+  "actions": {
+    "App\\Http\\Controllers\\Internal\\McpV1\\OrderOperationsController@orders": "slimweb_orders_list",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OrderOperationsController@order": "slimweb_orders_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OrderOperationsController@profit": "slimweb_orders_profit_statistics",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OrderOperationsController@pendingReturns": "slimweb_returns_pending_list",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OrderOperationsController@createLogistics": "slimweb_orders_create_logistics",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OrderOperationsController@markShipped": "slimweb_orders_mark_shipped",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OrderOperationsController@createReturnLogistics": "slimweb_returns_create_logistics",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OrderOperationsController@cancelReturn": "slimweb_returns_cancel",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OrderOperationsController@completeReturn": "slimweb_returns_complete",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OrderOperationsController@createRefund": "slimweb_refunds_create",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OrderOperationsController@completeRefund": "slimweb_refunds_complete",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OrderOperationsController@updateStatus": "slimweb_orders_update_status",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OrderOperationsController@updateRecipient": "slimweb_orders_update_recipient",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OrderOperationsController@deleteOrders": "slimweb_orders_delete",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OrderOperationsController@orderWaybill": "slimweb_orders_get_waybill_url",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OrderOperationsController@returnWaybill": "slimweb_returns_get_waybill_url",
+    "App\\Http\\Controllers\\Internal\\McpV1\\NotificationController@subscribe": "events/subscribe",
+    "App\\Http\\Controllers\\Internal\\McpV1\\NotificationController@unsubscribe": "events/unsubscribe",
+    "App\\Http\\Controllers\\Internal\\McpV1\\BasicSettingsController@show": "slimweb_settings_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\BasicSettingsController@update": "slimweb_settings_update",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OperationalSettingsController@readiness": "slimweb_site_readiness_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OperationalSettingsController@launchProgress": "slimweb_site_launch_progress_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OperationalSettingsController@seo": "slimweb_seo_settings_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OperationalSettingsController@updateSeo": "slimweb_seo_settings_update",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OperationalSettingsController@facebook": "slimweb_facebook_settings_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OperationalSettingsController@updateFacebook": "slimweb_facebook_settings_update",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OperationalSettingsController@notion": "slimweb_notion_settings_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OperationalSettingsController@updateNotion": "slimweb_notion_settings_update",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OperationalSettingsController@contact": "slimweb_contact_settings_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OperationalSettingsController@updateContact": "slimweb_contact_settings_update",
+    "App\\Http\\Controllers\\Internal\\McpV1\\OperationalSettingsController@dashboard": "slimweb_dashboard_summary",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CommunicationAdminController@mailDelivery": "slimweb_mail_delivery_settings_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CommunicationAdminController@updateMailDelivery": "slimweb_mail_delivery_settings_update",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CommunicationAdminController@mailTemplates": "slimweb_mail_templates_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CommunicationAdminController@updateMailTemplates": "slimweb_mail_templates_update",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CommunicationAdminController@mailLayout": "slimweb_mail_layout_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CommunicationAdminController@updateMailLayout": "slimweb_mail_layout_update",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CommunicationAdminController@admins": "slimweb_admins_list",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CommunicationAdminController@upsertAdmin": "slimweb_admins_upsert",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CommunicationAdminController@deleteAdmin": "slimweb_admins_delete",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CommunicationAdminController@sendMemberEmail": "slimweb_member_email_send",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CommunicationAdminController@newsletters": "slimweb_newsletters_list",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CommunicationAdminController@newsletter": "slimweb_newsletters_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CommunicationAdminController@createNewsletter": "slimweb_newsletters_create",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CommunicationAdminController@updateNewsletter": "slimweb_newsletters_update",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CommunicationAdminController@deleteNewsletter": "slimweb_newsletters_delete",
+    "App\\Http\\Controllers\\Internal\\McpV1\\MemberPromotionController@members": "slimweb_members_list",
+    "App\\Http\\Controllers\\Internal\\McpV1\\MemberPromotionController@member": "slimweb_members_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\MemberPromotionController@deleteMember": "slimweb_members_delete",
+    "App\\Http\\Controllers\\Internal\\McpV1\\MemberPromotionController@couponTemplates": "slimweb_coupon_templates_list",
+    "App\\Http\\Controllers\\Internal\\McpV1\\MemberPromotionController@upsertCouponTemplate": "slimweb_coupon_templates_upsert",
+    "App\\Http\\Controllers\\Internal\\McpV1\\MemberPromotionController@issueCoupon": "slimweb_members_coupons_issue",
+    "App\\Http\\Controllers\\Internal\\McpV1\\MemberPromotionController@revokeCoupon": "slimweb_members_coupons_revoke",
+    "App\\Http\\Controllers\\Internal\\McpV1\\MemberPromotionController@discountCodes": "slimweb_discount_codes_list",
+    "App\\Http\\Controllers\\Internal\\McpV1\\MemberPromotionController@upsertDiscountCode": "slimweb_discount_codes_upsert",
+    "App\\Http\\Controllers\\Internal\\McpV1\\MemberPromotionController@deleteDiscountCode": "slimweb_discount_codes_delete",
+    "App\\Http\\Controllers\\Internal\\McpV1\\MemberPromotionController@memberTiers": "slimweb_member_tiers_list",
+    "App\\Http\\Controllers\\Internal\\McpV1\\MemberPromotionController@upsertMemberTier": "slimweb_member_tiers_upsert",
+    "App\\Http\\Controllers\\Internal\\McpV1\\MemberPromotionController@deleteMemberTier": "slimweb_member_tiers_delete",
+    "App\\Http\\Controllers\\Internal\\McpV1\\MerchandisingController@thresholdGifts": "slimweb_threshold_gifts_list",
+    "App\\Http\\Controllers\\Internal\\McpV1\\MerchandisingController@upsertThresholdGift": "slimweb_threshold_gifts_upsert",
+    "App\\Http\\Controllers\\Internal\\McpV1\\MerchandisingController@deleteThresholdGift": "slimweb_threshold_gifts_delete",
+    "App\\Http\\Controllers\\Internal\\McpV1\\MerchandisingController@productAddOns": "slimweb_product_add_ons_list",
+    "App\\Http\\Controllers\\Internal\\McpV1\\MerchandisingController@upsertProductAddOn": "slimweb_product_add_ons_upsert",
+    "App\\Http\\Controllers\\Internal\\McpV1\\MerchandisingController@deleteProductAddOn": "slimweb_product_add_ons_delete",
+    "App\\Http\\Controllers\\Internal\\McpV1\\IntegrationOperationsController@searchNotion": "slimweb_notion_pages_search",
+    "App\\Http\\Controllers\\Internal\\McpV1\\IntegrationOperationsController@notionContent": "slimweb_notion_page_get_content",
+    "App\\Http\\Controllers\\Internal\\McpV1\\IntegrationOperationsController@createPoster": "slimweb_posters_create",
+    "App\\Http\\Controllers\\Internal\\McpV1\\IntegrationOperationsController@poster": "slimweb_posters_create",
+    "App\\Http\\Controllers\\Internal\\McpV1\\IntegrationOperationsController@customerServiceLogs": "slimweb_customer_service_logs_list",
+    "App\\Http\\Controllers\\Internal\\McpV1\\IntegrationOperationsController@deleteCustomerServiceLog": "slimweb_customer_service_logs_delete",
+    "App\\Http\\Controllers\\Internal\\McpV1\\IntegrationOperationsController@customerServiceSettings": "slimweb_customer_service_settings_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\IntegrationOperationsController@updateCustomerServiceSettings": "slimweb_customer_service_settings_update",
+    "App\\Http\\Controllers\\Internal\\McpV1\\IntegrationOperationsController@createExport": "slimweb_exports_create",
+    "App\\Http\\Controllers\\Internal\\McpV1\\IntegrationOperationsController@audit": "slimweb_audit_list",
+    "App\\Http\\Controllers\\Internal\\McpV1\\ThemeController@index": "slimweb_themes_list",
+    "App\\Http\\Controllers\\Internal\\McpV1\\ThemeController@mode": "slimweb_site_theme_mode_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\ThemeController@updateMode": "slimweb_site_theme_mode_update",
+    "App\\Http\\Controllers\\Internal\\McpV1\\ThemeController@design": "slimweb_design_context_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\ThemeController@create": "slimweb_themes_create_from_default",
+    "App\\Http\\Controllers\\Internal\\McpV1\\ThemeController@activate": "slimweb_themes_activate",
+    "App\\Http\\Controllers\\Internal\\McpV1\\ThemeController@delete": "slimweb_themes_delete",
+    "App\\Http\\Controllers\\Internal\\McpV1\\ThemeController@shell": "slimweb_theme_shell_get_context",
+    "App\\Http\\Controllers\\Internal\\McpV1\\ThemeController@updateRoot": "slimweb_themes_update_root_elements",
+    "App\\Http\\Controllers\\Internal\\McpV1\\ThemeController@profile": "slimweb_theme_style_profile_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\ThemeController@upsertProfile": "slimweb_theme_style_profile_upsert",
+    "App\\Http\\Controllers\\Internal\\McpV1\\ThemeController@appendRequest": "slimweb_theme_style_profile_append_request",
+    "App\\Http\\Controllers\\Internal\\McpV1\\PageController@index": "slimweb_pages_list",
+    "App\\Http\\Controllers\\Internal\\McpV1\\PageController@titleCheck": "slimweb_pages_check_title",
+    "App\\Http\\Controllers\\Internal\\McpV1\\PageController@show": "slimweb_pages_get_content",
+    "App\\Http\\Controllers\\Internal\\McpV1\\PageController@preview": "slimweb_preview_get_page_url",
+    "App\\Http\\Controllers\\Internal\\McpV1\\PageController@upsert": "slimweb_pages_update",
+    "App\\Http\\Controllers\\Internal\\McpV1\\PageController@delete": "slimweb_pages_delete",
+    "App\\Http\\Controllers\\Internal\\McpV1\\ArticleController@index": "slimweb_articles_list",
+    "App\\Http\\Controllers\\Internal\\McpV1\\ArticleController@titleCheck": "slimweb_articles_check_title",
+    "App\\Http\\Controllers\\Internal\\McpV1\\ArticleController@show": "slimweb_articles_get_content",
+    "App\\Http\\Controllers\\Internal\\McpV1\\ArticleController@upsert": "slimweb_articles_update",
+    "App\\Http\\Controllers\\Internal\\McpV1\\ArticleController@delete": "slimweb_articles_delete",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CatalogController@categories": "slimweb_categories_list",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CatalogController@navigation": "slimweb_nav_items_list",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CatalogController@products": "slimweb_products_list",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CatalogController@product": "slimweb_products_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CatalogController@upsertProduct": "slimweb_products_upsert",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CatalogController@deleteProduct": "slimweb_products_delete",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CatalogController@inspectImport": "slimweb_products_import_inspect",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CatalogController@validateImport": "slimweb_products_import_validate",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CatalogController@commitImport": "slimweb_products_import_commit",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CatalogController@upsertCategory": "slimweb_categories_upsert",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CatalogController@deleteCategory": "slimweb_categories_delete",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CatalogController@upsertNavItem": "slimweb_nav_items_upsert",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CatalogController@deleteNavItem": "slimweb_nav_items_delete",
+    "App\\Http\\Controllers\\Internal\\McpV1\\ExternalAssetController@index": "slimweb_external_assets_list",
+    "App\\Http\\Controllers\\Internal\\McpV1\\ExternalAssetController@delete": "slimweb_external_assets_delete",
+    "App\\Http\\Controllers\\Internal\\McpV1\\MediaController@stats": "slimweb_media_library_stats",
+    "App\\Http\\Controllers\\Internal\\McpV1\\MediaController@deleteUnused": "slimweb_media_library_delete_unused",
+    "App\\Http\\Controllers\\Internal\\McpV1\\MediaController@register": "slimweb_assets_upload",
+    "App\\Http\\Controllers\\Internal\\McpV1\\MediaController@importChatGptAttachment": "slimweb_images_import_chatgpt_attachment",
+    "App\\Http\\Controllers\\Internal\\McpV1\\UploadController@create": "slimweb_uploads_create",
+    "App\\Http\\Controllers\\Internal\\McpV1\\UploadController@commit": "slimweb_uploads_commit",
+    "App\\Http\\Controllers\\Internal\\McpV1\\ContentSeoController@update": "slimweb_content_seo_update",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CommerceSettingsController@show": "slimweb_payment_logistics_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CommerceSettingsController@update": "slimweb_payment_logistics_update",
+    "App\\Http\\Controllers\\Internal\\McpV1\\InvoiceController@settings": "slimweb_invoice_settings_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\InvoiceController@updateSettings": "slimweb_invoice_settings_update",
+    "App\\Http\\Controllers\\Internal\\McpV1\\InvoiceController@index": "slimweb_invoices_list",
+    "App\\Http\\Controllers\\Internal\\McpV1\\InvoiceController@show": "slimweb_invoices_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\InvoiceController@create": "slimweb_invoices_create",
+    "App\\Http\\Controllers\\Internal\\McpV1\\InvoiceController@issue": "slimweb_invoices_issue",
+    "App\\Http\\Controllers\\Internal\\McpV1\\InvoiceController@sync": "slimweb_invoices_sync",
+    "App\\Http\\Controllers\\Internal\\McpV1\\InvoiceController@void": "slimweb_invoices_void",
+    "App\\Http\\Controllers\\Internal\\McpV1\\InvoiceController@allowance": "slimweb_invoices_allowance",
+    "App\\Http\\Controllers\\Internal\\McpV1\\LineController@qrCode": "slimweb_line_bot_qrcode_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\LineController@friendStats": "slimweb_line_friends_stats",
+    "App\\Http\\Controllers\\Internal\\McpV1\\LineController@friendMembers": "slimweb_line_members_list",
+    "App\\Http\\Controllers\\Internal\\McpV1\\LineController@preparePush": "slimweb_line_push_prepare",
+    "App\\Http\\Controllers\\Internal\\McpV1\\LineController@sendPush": "slimweb_line_push_send",
+    "App\\Http\\Controllers\\Internal\\McpV1\\LineController@pushStatus": "slimweb_line_push_status",
+    "App\\Http\\Controllers\\Internal\\McpV1\\LineController@bot": "slimweb_line_bot_settings_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\LineController@updateBot": "slimweb_line_bot_settings_update",
+    "App\\Http\\Controllers\\Internal\\McpV1\\LineController@ai": "slimweb_line_ai_settings_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\LineController@updateAi": "slimweb_line_ai_settings_update",
+    "App\\Http\\Controllers\\Internal\\McpV1\\LineController@menus": "slimweb_line_rich_menus_list",
+    "App\\Http\\Controllers\\Internal\\McpV1\\LineController@menu": "slimweb_line_rich_menus_get",
+    "App\\Http\\Controllers\\Internal\\McpV1\\LineController@createMenu": "slimweb_line_rich_menus_create",
+    "App\\Http\\Controllers\\Internal\\McpV1\\LineController@publishMenu": "slimweb_line_rich_menus_publish",
+    "App\\Http\\Controllers\\Internal\\McpV1\\LineController@deleteMenu": "slimweb_line_rich_menus_delete",
+    "App\\Http\\Controllers\\Internal\\McpV1\\CatalogController@productImageReference": "slimweb_product_image_reference_prepare",
+    "App\\Http\\Controllers\\Internal\\McpV1\\SiteContextController@resolve": "slimweb_site_select",
+    "App\\Http\\Controllers\\SiteAdminController@updateMcpOrdersStatus": "slimweb_orders_update_status",
+    "App\\Http\\Controllers\\SiteAdminController@updateMcpOrdersRecipient": "slimweb_orders_update_recipient",
+    "App\\Http\\Controllers\\SiteAdminController@deleteMcpOrders": "slimweb_orders_delete",
+    "App\\Http\\Controllers\\SiteAdminController@mcpWaybillUrl": "slimweb_orders_get_waybill_url",
+    "App\\Http\\Controllers\\SiteAdminController@searchMcpNotionPages": "slimweb_notion_pages_search",
+    "App\\Http\\Controllers\\SiteAdminController@readMcpNotionPage": "slimweb_notion_page_get_content",
+    "App\\Http\\Controllers\\SiteAdminController@mcpMediaStats": "slimweb_media_library_stats",
+    "App\\Http\\Controllers\\SiteAdminController@deleteMcpUnusedMedia": "slimweb_media_library_delete_unused",
+    "App\\Http\\Controllers\\SiteAdminController@createMcpUpload": "slimweb_uploads_create",
+    "App\\Http\\Controllers\\SiteAdminController@uploadMcpUpload": "slimweb_uploads_put",
+    "App\\Http\\Controllers\\SiteAdminController@commitMcpUpload": "slimweb_uploads_commit",
+    "App\\Http\\Controllers\\SiteAdminController@createMcpPoster": "slimweb_posters_create",
+    "App\\Http\\Controllers\\SiteAdminController@showMcpPoster": "slimweb_posters_get",
+    "App\\Http\\Controllers\\SiteAdminController@updateMcpBasicSettingsLogo": "slimweb_settings_update"
+  },
+  "roles": [
+    "category_management",
+    "system_admin",
+    "basic_settings",
+    "seo_settings",
+    "integration_settings",
+    "terms",
+    "mail_settings",
+    "contact",
+    "shipping_discount",
+    "payments_shipping",
+    "backend_ai_assistant",
+    "asset_library",
+    "main_page_management",
+    "navbar_management",
+    "product_management",
+    "product_import",
+    "member_list",
+    "orders_management",
+    "invoices_management",
+    "returns_management",
+    "order_profit_statistics",
+    "member_levels",
+    "coupon_management",
+    "discount_code_management",
+    "threshold_gift_management",
+    "add_on_product_management",
+    "article_import",
+    "article_list",
+    "ai_integration_settings",
+    "ai_customer_service",
+    "newsletter_management",
+    "customer_service_logs"
+  ]
+}

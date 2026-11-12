@@ -1,3 +1,4 @@
+import {operationRequirement} from './operationPolicy.js';
 export class BackendRepositoryError extends Error {
   constructor(message, options = {}) {
     super(message);
@@ -32,7 +33,7 @@ export class SlimWebBackendRepository {
   async siteNotificationSubscription(identity, params, action) {
     const actor = await this.resolveAdminSiteForIdentity(identity, {site_code: params.arguments.site_code});
     return this.request(this.sitePath(actor, `/events/${action}`), {
-      method: 'POST', identity: actor, tool: `events/${action}`, permission: 'backend_ai_assistant', body: params
+      method: 'POST', identity: actor, tool: `events/${action}`, body: params
     });
   }
 
@@ -80,7 +81,6 @@ export class SlimWebBackendRepository {
     const data = await this.request('/internal/mcp/v1/sites', {
       identity,
       tool: 'slimweb_sites_list',
-      permission: 'backend_ai_assistant'
     });
 
     return data.sites;
@@ -95,7 +95,6 @@ export class SlimWebBackendRepository {
       method: 'POST',
       identity,
       tool: 'slimweb_site_select',
-      permission: 'backend_ai_assistant',
       body: selector
     });
 
@@ -115,7 +114,6 @@ export class SlimWebBackendRepository {
       : await this.request(this.sitePath(actor, '/themes?include_default=1'), {
           identity: actor,
           tool: 'slimweb_site_select',
-          permission: 'page_management_templates'
         });
 
     return {
@@ -131,7 +129,6 @@ export class SlimWebBackendRepository {
     return this.request(this.settingsPath(actor), {
       identity: actor,
       tool: 'slimweb_settings_get',
-      permission: 'basic_settings'
     });
   }
 
@@ -142,103 +139,102 @@ export class SlimWebBackendRepository {
       method: 'PATCH',
       identity: actor,
       tool: 'slimweb_settings_update',
-      permission: 'basic_settings',
       idempotencyKey: this.idempotencyKeyFactory(),
       body: patch
     });
   }
 
   async getSiteReadiness(actor, args) {
-    return this.operationalRead(actor, '/operations/readiness', 'slimweb_site_readiness_get', '', args, ['include_optional']);
+    return this.operationalRead(actor, '/operations/readiness', 'slimweb_site_readiness_get', args, ['include_optional']);
   }
 
   async getSiteLaunchProgress(actor, args) {
-    return this.operationalRead(actor, '/operations/launch-progress', 'slimweb_site_launch_progress_get', '', args, ['include_optional']);
+    return this.operationalRead(actor, '/operations/launch-progress', 'slimweb_site_launch_progress_get', args, ['include_optional']);
   }
 
   async getSeoSettings(actor) {
-    return this.operationalRead(actor, '/settings/seo', 'slimweb_seo_settings_get', 'seo_settings');
+    return this.operationalRead(actor, '/settings/seo', 'slimweb_seo_settings_get');
   }
 
   async updateSeoSettings(actor, args) {
-    return this.operationalMutation(actor, '/settings/seo', 'slimweb_seo_settings_update', 'seo_settings', args);
+    return this.operationalMutation(actor, '/settings/seo', 'slimweb_seo_settings_update', args);
   }
 
   async getFacebookSettings(actor) {
-    return this.operationalRead(actor, '/integrations/facebook', 'slimweb_facebook_settings_get', 'integration_settings');
+    return this.operationalRead(actor, '/integrations/facebook', 'slimweb_facebook_settings_get');
   }
 
   async updateFacebookSettings(actor, args) {
-    return this.operationalMutation(actor, '/integrations/facebook', 'slimweb_facebook_settings_update', 'integration_settings', args);
+    return this.operationalMutation(actor, '/integrations/facebook', 'slimweb_facebook_settings_update', args);
   }
 
   async getNotionSettings(actor) {
-    return this.operationalRead(actor, '/integrations/notion', 'slimweb_notion_settings_get', 'integration_settings');
+    return this.operationalRead(actor, '/integrations/notion', 'slimweb_notion_settings_get');
   }
 
   async updateNotionSettings(actor, args) {
-    return this.operationalMutation(actor, '/integrations/notion', 'slimweb_notion_settings_update', 'integration_settings', args);
+    return this.operationalMutation(actor, '/integrations/notion', 'slimweb_notion_settings_update', args);
   }
 
   async getContactSettings(actor) {
-    return this.operationalRead(actor, '/settings/contact', 'slimweb_contact_settings_get', 'basic_settings');
+    return this.operationalRead(actor, '/settings/contact', 'slimweb_contact_settings_get');
   }
 
   async updateContactSettings(actor, args) {
-    return this.operationalMutation(actor, '/settings/contact', 'slimweb_contact_settings_update', 'basic_settings', args);
+    return this.operationalMutation(actor, '/settings/contact', 'slimweb_contact_settings_update', args);
   }
 
   async getDashboardSummary(actor) {
-    return this.operationalRead(actor, '/operations/dashboard-summary', 'slimweb_dashboard_summary', '');
+    return this.operationalRead(actor, '/operations/dashboard-summary', 'slimweb_dashboard_summary');
   }
 
   async getMailDeliverySettings(actor) {
-    return this.operationalRead(actor, '/communications/mail-delivery', 'slimweb_mail_delivery_settings_get', 'notification_settings');
+    return this.operationalRead(actor, '/communications/mail-delivery', 'slimweb_mail_delivery_settings_get');
   }
 
   async updateMailDeliverySettings(actor, args) {
-    return this.operationalMutation(actor, '/communications/mail-delivery', 'slimweb_mail_delivery_settings_update', 'notification_settings', args);
+    return this.operationalMutation(actor, '/communications/mail-delivery', 'slimweb_mail_delivery_settings_update', args);
   }
 
   async getMailTemplates(actor) {
-    return this.operationalRead(actor, '/communications/mail-templates', 'slimweb_mail_templates_get', 'notification_settings');
+    return this.operationalRead(actor, '/communications/mail-templates', 'slimweb_mail_templates_get');
   }
 
   async updateMailTemplates(actor, args) {
-    return this.operationalMutation(actor, '/communications/mail-templates', 'slimweb_mail_templates_update', 'notification_settings', args);
+    return this.operationalMutation(actor, '/communications/mail-templates', 'slimweb_mail_templates_update', args);
   }
 
   async getMailLayout(actor) {
-    return this.operationalRead(actor, '/communications/mail-layout', 'slimweb_mail_layout_get', 'notification_settings');
+    return this.operationalRead(actor, '/communications/mail-layout', 'slimweb_mail_layout_get');
   }
 
   async updateMailLayout(actor, args) {
-    return this.operationalMutation(actor, '/communications/mail-layout', 'slimweb_mail_layout_update', 'notification_settings', args);
+    return this.operationalMutation(actor, '/communications/mail-layout', 'slimweb_mail_layout_update', args);
   }
 
   async listAdmins(actor) {
-    return this.operationalRead(actor, '/operations/admins', 'slimweb_admins_list', 'system_admin');
+    return this.operationalRead(actor, '/operations/admins', 'slimweb_admins_list');
   }
 
   async upsertAdmin(actor, args) {
-    return this.operationalMutation(actor, '/operations/admins', 'slimweb_admins_upsert', 'system_admin', args);
+    return this.operationalMutation(actor, '/operations/admins', 'slimweb_admins_upsert', args);
   }
 
   async deleteAdmin(actor, args) {
     const { admin_id: adminId, ...body } = this.withoutSiteSelector(args);
-    return this.operationalMutation(actor, `/operations/admins/${this.requiredId(adminId, 'admin_id')}`, 'slimweb_admins_delete', 'system_admin', body, 'DELETE');
+    return this.operationalMutation(actor, `/operations/admins/${this.requiredId(adminId, 'admin_id')}`, 'slimweb_admins_delete', body, 'DELETE');
   }
 
   async sendMemberEmail(actor, args) {
-    return this.operationalMutation(actor, '/communications/member-email', 'slimweb_member_email_send', 'member_management', args, 'POST');
+    return this.operationalMutation(actor, '/communications/member-email', 'slimweb_member_email_send', args, 'POST');
   }
 
   async createNewsletter(actor, args) {
-    return this.operationalMutation(actor, '/communications/newsletters', 'slimweb_newsletters_create', 'newsletter_management', args, 'POST');
+    return this.operationalMutation(actor, '/communications/newsletters', 'slimweb_newsletters_create', args, 'POST');
   }
 
   async listNewsletters(actor, args) {
-    return this.operationalRead(actor, '/communications/newsletters', 'slimweb_newsletters_list', 'newsletter_management', args, ['page', 'per_page']);
+    return this.operationalRead(actor, '/communications/newsletters', 'slimweb_newsletters_list', args, ['page', 'per_page']);
   }
 
   async getNewsletter(actor, args) {
@@ -247,29 +243,29 @@ export class SlimWebBackendRepository {
 
   async updateNewsletter(actor, args) {
     const { newsletter_id: newsletterId, ...body } = this.withoutSiteSelector(args);
-    return this.operationalMutation(actor, `/communications/newsletters/${this.requiredId(newsletterId, 'newsletter_id')}`, 'slimweb_newsletters_update', 'newsletter_management', body);
+    return this.operationalMutation(actor, `/communications/newsletters/${this.requiredId(newsletterId, 'newsletter_id')}`, 'slimweb_newsletters_update', body);
   }
 
   async deleteNewsletter(actor, args) {
     const { newsletter_id: newsletterId, ...body } = this.withoutSiteSelector(args);
-    return this.operationalMutation(actor, `/communications/newsletters/${this.requiredId(newsletterId, 'newsletter_id')}`, 'slimweb_newsletters_delete', 'newsletter_management', body, 'DELETE');
+    return this.operationalMutation(actor, `/communications/newsletters/${this.requiredId(newsletterId, 'newsletter_id')}`, 'slimweb_newsletters_delete', body, 'DELETE');
   }
 
   async newsletterRead(actor, args, tool) {
     const newsletterId = this.requiredId(args?.newsletter_id, 'newsletter_id');
-    return this.operationalRead(actor, `/communications/newsletters/${newsletterId}`, tool, 'newsletter_management');
+    return this.operationalRead(actor, `/communications/newsletters/${newsletterId}`, tool);
   }
 
   async searchNotionPages(actor, args) {
-    return this.request(this.sitePath(actor, '/integrations/notion/pages/search'), { method: 'POST', identity: actor, tool: 'slimweb_notion_pages_search', permission: 'integration_settings', body: this.withoutSiteSelector(args) });
+    return this.request(this.sitePath(actor, '/integrations/notion/pages/search'), { method: 'POST', identity: actor, tool: 'slimweb_notion_pages_search', body: this.withoutSiteSelector(args) });
   }
 
   async getNotionPageContent(actor, args) {
-    return this.request(this.sitePath(actor, '/integrations/notion/pages/content'), { method: 'POST', identity: actor, tool: 'slimweb_notion_page_content_get', permission: 'integration_settings', body: this.withoutSiteSelector(args) });
+    return this.request(this.sitePath(actor, '/integrations/notion/pages/content'), { method: 'POST', identity: actor, tool: 'slimweb_notion_page_get_content', body: this.withoutSiteSelector(args) });
   }
 
   async createPoster(actor, args) {
-    const payload = await this.operationalMutation(actor, '/operations/posters', 'slimweb_posters_create', 'ai_management', args, 'POST');
+    const payload = await this.operationalMutation(actor, '/operations/posters', 'slimweb_posters_create', args, 'POST');
     return this.pollPoster(actor, payload);
   }
 
@@ -278,7 +274,7 @@ export class SlimWebBackendRepository {
     const deadline = Date.now() + this.posterTimeoutMs;
     while (Date.now() < deadline) {
       if (this.posterPollIntervalMs > 0) await new Promise((resolve) => setTimeout(resolve, Math.min(this.posterPollIntervalMs, deadline - Date.now())));
-      const status = await this.operationalRead(actor, `/operations/posters/${encodeURIComponent(payload.job_id)}`, 'slimweb_posters_create', 'ai_management');
+      const status = await this.operationalRead(actor, `/operations/posters/${encodeURIComponent(payload.job_id)}`, 'slimweb_posters_get');
       if (status?.status === 'completed') return status;
       if (status?.status === 'failed') throw new BackendError(status.message || 'Poster generation failed.', { code: 'UPSTREAM_ERROR', details: { job_id: payload.job_id } });
     }
@@ -286,60 +282,58 @@ export class SlimWebBackendRepository {
   }
 
   async listCustomerServiceLogs(actor, args) {
-    return this.operationalRead(actor, '/operations/customer-service/logs', 'slimweb_customer_service_logs_list', 'ai_customer_service', args, ['page', 'per_page', 'member_id', 'keyword']);
+    return this.operationalRead(actor, '/operations/customer-service/logs', 'slimweb_customer_service_logs_list', args, ['page', 'per_page', 'member_id', 'keyword']);
   }
 
   async deleteCustomerServiceLog(actor, args) {
     const { customer_service_log_id: logId, ...body } = this.withoutSiteSelector(args);
-    return this.operationalMutation(actor, `/operations/customer-service/logs/${this.requiredId(logId, 'customer_service_log_id')}`, 'slimweb_customer_service_logs_delete', 'ai_customer_service', body, 'DELETE');
+    return this.operationalMutation(actor, `/operations/customer-service/logs/${this.requiredId(logId, 'customer_service_log_id')}`, 'slimweb_customer_service_logs_delete', body, 'DELETE');
   }
 
   async getCustomerServiceSettings(actor) {
-    return this.operationalRead(actor, '/operations/customer-service/settings', 'slimweb_customer_service_settings_get', 'ai_customer_service');
+    return this.operationalRead(actor, '/operations/customer-service/settings', 'slimweb_customer_service_settings_get');
   }
 
   async updateCustomerServiceSettings(actor, args) {
-    return this.operationalMutation(actor, '/operations/customer-service/settings', 'slimweb_customer_service_settings_update', 'ai_customer_service', args);
+    return this.operationalMutation(actor, '/operations/customer-service/settings', 'slimweb_customer_service_settings_update', args);
   }
 
   async createExport(actor, args) {
-    return this.operationalMutation(actor, '/operations/exports', 'slimweb_exports_create', 'system_admin', args, 'POST');
+    return this.operationalMutation(actor, '/operations/exports', 'slimweb_exports_create', args, 'POST');
   }
 
   async listAuditLogs(actor, args) {
-    return this.operationalRead(actor, '/operations/audit', 'slimweb_audit_logs_list', 'system_admin', args, ['limit', 'tool_name']);
+    return this.operationalRead(actor, '/operations/audit', 'slimweb_audit_list', args, ['limit', 'tool_name']);
   }
 
   async listCategories(actor) {
     return this.request(this.sitePath(actor, '/catalog/categories'), {
       identity: actor,
       tool: 'slimweb_categories_list',
-      permission: 'product_management_categories'
     });
   }
 
   async upsertCategory(actor, args) {
-    return this.catalogMutation(actor, '/catalog/categories', 'PUT', 'slimweb_categories_upsert', 'product_management_categories', args);
+    return this.catalogMutation(actor, '/catalog/categories', 'PUT', 'slimweb_categories_upsert', args);
   }
 
   async deleteCategory(actor, args) {
-    return this.catalogMutation(actor, `/catalog/categories/${this.requiredId(args?.category_id, 'category_id')}`, 'DELETE', 'slimweb_categories_delete', 'product_management_categories', {});
+    return this.catalogMutation(actor, `/catalog/categories/${this.requiredId(args?.category_id, 'category_id')}`, 'DELETE', 'slimweb_categories_delete', {});
   }
 
   async listNavItems(actor) {
     return this.request(this.sitePath(actor, '/navigation/items'), {
       identity: actor,
       tool: 'slimweb_nav_items_list',
-      permission: 'page_management_navbar'
     });
   }
 
   async upsertNavItem(actor, args) {
-    return this.catalogMutation(actor, '/navigation/items', 'PUT', 'slimweb_nav_items_upsert', 'page_management_navbar', args);
+    return this.catalogMutation(actor, '/navigation/items', 'PUT', 'slimweb_nav_items_upsert', args);
   }
 
   async deleteNavItem(actor, args) {
-    return this.catalogMutation(actor, `/navigation/items/${this.requiredId(args?.nav_item_id, 'nav_item_id')}`, 'DELETE', 'slimweb_nav_items_delete', 'page_management_navbar', {});
+    return this.catalogMutation(actor, `/navigation/items/${this.requiredId(args?.nav_item_id, 'nav_item_id')}`, 'DELETE', 'slimweb_nav_items_delete', {});
   }
 
   async listProducts(actor, args) {
@@ -355,7 +349,6 @@ export class SlimWebBackendRepository {
     return this.request(this.sitePath(actor, suffix), {
       identity: actor,
       tool: 'slimweb_products_list',
-      permission: 'product_management_products'
     });
   }
 
@@ -363,7 +356,6 @@ export class SlimWebBackendRepository {
     return this.request(this.sitePath(actor, `/catalog/products/${this.requiredId(args?.product_id, 'product_id')}`), {
       identity: actor,
       tool: 'slimweb_products_get',
-      permission: 'product_management_products'
     });
   }
 
@@ -377,11 +369,11 @@ export class SlimWebBackendRepository {
   }
 
   async upsertProduct(actor, args) {
-    return this.catalogMutation(actor, '/catalog/products', 'PUT', 'slimweb_products_upsert', 'product_management_products', args);
+    return this.catalogMutation(actor, '/catalog/products', 'PUT', 'slimweb_products_upsert', args);
   }
 
   async deleteProduct(actor, args) {
-    return this.catalogMutation(actor, `/catalog/products/${this.requiredId(args?.product_id, 'product_id')}`, 'DELETE', 'slimweb_products_delete', 'product_management_products', {});
+    return this.catalogMutation(actor, `/catalog/products/${this.requiredId(args?.product_id, 'product_id')}`, 'DELETE', 'slimweb_products_delete', {});
   }
 
   async inspectProductImport(actor, args) {
@@ -389,7 +381,6 @@ export class SlimWebBackendRepository {
       method: 'POST',
       identity: actor,
       tool: 'slimweb_products_import_inspect',
-      permission: 'product_management_import',
       body: this.withoutSiteSelector(args)
     });
   }
@@ -399,13 +390,12 @@ export class SlimWebBackendRepository {
       method: 'POST',
       identity: actor,
       tool: 'slimweb_products_import_validate',
-      permission: 'product_management_import',
       body: this.withoutSiteSelector(args)
     });
   }
 
   async commitProductImport(actor, args) {
-    return this.catalogMutation(actor, '/catalog/imports/commit', 'POST', 'slimweb_products_import_commit', 'product_management_import', args);
+    return this.catalogMutation(actor, '/catalog/imports/commit', 'POST', 'slimweb_products_import_commit', args);
   }
 
   async listArticles(actor, args) {
@@ -417,7 +407,6 @@ export class SlimWebBackendRepository {
     return this.request(this.sitePath(actor, `/content/articles${query.size ? `?${query}` : ''}`), {
       identity: actor,
       tool: 'slimweb_articles_list',
-      permission: 'page_management_articles'
     });
   }
 
@@ -426,7 +415,6 @@ export class SlimWebBackendRepository {
     return this.request(this.sitePath(actor, `/content/articles/title-check?${query}`), {
       identity: actor,
       tool: 'slimweb_articles_check_title',
-      permission: 'page_management_articles'
     });
   }
 
@@ -434,52 +422,51 @@ export class SlimWebBackendRepository {
     return this.request(this.sitePath(actor, `/content/articles/${this.requiredId(args?.article_id, 'article_id')}`), {
       identity: actor,
       tool: 'slimweb_articles_get_content',
-      permission: 'page_management_articles'
     });
   }
 
   async createArticle(actor, args) {
-    return this.catalogMutation(actor, '/content/articles', 'PUT', 'slimweb_articles_create', 'page_management_articles', args);
+    return this.catalogMutation(actor, '/content/articles', 'PUT', 'slimweb_articles_create', args);
   }
 
   async updateArticle(actor, args) {
-    return this.catalogMutation(actor, '/content/articles', 'PUT', 'slimweb_articles_update', 'page_management_articles', args);
+    return this.catalogMutation(actor, '/content/articles', 'PUT', 'slimweb_articles_update', args);
   }
 
   async deleteArticle(actor, args) {
-    return this.catalogMutation(actor, `/content/articles/${this.requiredId(args?.article_id, 'article_id')}`, 'DELETE', 'slimweb_articles_delete', 'page_management_articles', {});
+    return this.catalogMutation(actor, `/content/articles/${this.requiredId(args?.article_id, 'article_id')}`, 'DELETE', 'slimweb_articles_delete', {});
   }
 
   async listPages(actor) {
-    return this.request(this.sitePath(actor, '/content/pages'), { identity: actor, tool: 'slimweb_pages_list', permission: 'page_management_pages' });
+    return this.request(this.sitePath(actor, '/content/pages'), { identity: actor, tool: 'slimweb_pages_list' });
   }
 
   async checkPageTitle(actor, args) {
     const query = new URLSearchParams({ title: String(args?.title ?? '') });
-    return this.request(this.sitePath(actor, `/content/pages/title-check?${query}`), { identity: actor, tool: 'slimweb_pages_check_title', permission: 'page_management_pages' });
+    return this.request(this.sitePath(actor, `/content/pages/title-check?${query}`), { identity: actor, tool: 'slimweb_pages_check_title' });
   }
 
   async getPageContent(actor, args) {
     const query = new URLSearchParams({ name: String(args?.page_name ?? '') });
-    return this.request(this.sitePath(actor, `/content/pages/resolve?${query}`), { identity: actor, tool: 'slimweb_pages_get_content', permission: 'page_management_pages' });
+    return this.request(this.sitePath(actor, `/content/pages/resolve?${query}`), { identity: actor, tool: 'slimweb_pages_get_content' });
   }
 
   async createPage(actor, args) {
-    return this.catalogMutation(actor, '/content/pages', 'PUT', 'slimweb_pages_create', 'page_management_pages', args);
+    return this.catalogMutation(actor, '/content/pages', 'PUT', 'slimweb_pages_create', args);
   }
 
   async updatePage(actor, args) {
-    return this.catalogMutation(actor, '/content/pages', 'PUT', 'slimweb_pages_update', 'page_management_pages', args);
+    return this.catalogMutation(actor, '/content/pages', 'PUT', 'slimweb_pages_update', args);
   }
 
   async getPagePreviewUrl(actor, args) {
-    return this.request(this.sitePath(actor, '/content/pages/preview'), { method: 'POST', identity: actor, tool: 'slimweb_preview_get_page_url', permission: 'page_management_pages', body: this.withoutSiteSelector(args) });
+    return this.request(this.sitePath(actor, '/content/pages/preview'), { method: 'POST', identity: actor, tool: 'slimweb_preview_get_page_url', body: this.withoutSiteSelector(args) });
   }
 
   async deletePage(actor, args) {
     const key = String(args?.page_key ?? '').trim();
     if (!/^[a-z0-9][a-z0-9_-]{1,99}$/i.test(key)) throw new BackendError('page_key is invalid.', { code: 'VALIDATION_FAILED' });
-    return this.catalogMutation(actor, `/content/pages/${encodeURIComponent(key)}`, 'DELETE', 'slimweb_pages_delete', 'page_management_pages', {});
+    return this.catalogMutation(actor, `/content/pages/${encodeURIComponent(key)}`, 'DELETE', 'slimweb_pages_delete', {});
   }
 
   async createUpload(actor, args) {
@@ -497,15 +484,15 @@ export class SlimWebBackendRepository {
   }
 
   async listThemes(actor) {
-    return this.request(this.sitePath(actor, '/themes'), { identity: actor, tool: 'slimweb_themes_list', permission: 'page_management_templates' });
+    return this.request(this.sitePath(actor, '/themes'), { identity: actor, tool: 'slimweb_themes_list' });
   }
 
   async getSiteThemeMode(actor) {
-    return this.request(this.sitePath(actor, '/theme-mode'), { identity: actor, tool: 'slimweb_site_theme_mode_get', permission: 'page_management_templates' });
+    return this.request(this.sitePath(actor, '/theme-mode'), { identity: actor, tool: 'slimweb_site_theme_mode_get' });
   }
 
   async getDesignContext(actor) {
-    return this.request(this.sitePath(actor, '/design-context'), { identity: actor, tool: 'slimweb_design_context_get', permission: 'page_management_templates' });
+    return this.request(this.sitePath(actor, '/design-context'), { identity: actor, tool: 'slimweb_design_context_get' });
   }
 
   async updateSiteThemeMode(actor, args) {
@@ -529,7 +516,7 @@ export class SlimWebBackendRepository {
   }
 
   async getThemeShellContext(actor, args) {
-    return this.request(this.sitePath(actor, `/themes/${this.themeId(args)}/shell-context`), { identity: actor, tool: 'slimweb_theme_shell_get_context', permission: 'page_management_templates' });
+    return this.request(this.sitePath(actor, `/themes/${this.themeId(args)}/shell-context`), { identity: actor, tool: 'slimweb_theme_shell_get_context' });
   }
 
   async updateThemeRootElements(actor, args) {
@@ -537,7 +524,7 @@ export class SlimWebBackendRepository {
   }
 
   async getThemeStyleProfile(actor, args) {
-    return this.request(this.sitePath(actor, `/themes/${this.themeId(args)}/style-profile`), { identity: actor, tool: 'slimweb_theme_style_profile_get', permission: 'page_management_templates' });
+    return this.request(this.sitePath(actor, `/themes/${this.themeId(args)}/style-profile`), { identity: actor, tool: 'slimweb_theme_style_profile_get' });
   }
 
   async upsertThemeStyleProfile(actor, args) {
@@ -551,7 +538,7 @@ export class SlimWebBackendRepository {
   async themeMutation(actor, suffix, method, tool, args) {
     const body = this.withoutSiteSelector(args);
     delete body.theme_id;
-    return this.request(this.sitePath(actor, suffix), { method, identity: actor, tool, permission: 'page_management_templates', idempotencyKey: this.idempotencyKeyFactory(), body });
+    return this.request(this.sitePath(actor, suffix), { method, identity: actor, tool, idempotencyKey: this.idempotencyKeyFactory(), body });
   }
 
   themeId(args) {
@@ -583,12 +570,12 @@ export class SlimWebBackendRepository {
   }
 
   async listExternalAssets(actor) {
-    return this.request(this.sitePath(actor, '/external-assets'), { identity: actor, tool: 'slimweb_external_assets_list', permission: 'page_management_external_assets' });
+    return this.request(this.sitePath(actor, '/external-assets'), { identity: actor, tool: 'slimweb_external_assets_list' });
   }
 
   async deleteExternalAsset(actor, args) {
     return this.request(this.sitePath(actor, `/external-assets/${this.requiredId(args?.asset_id, 'asset_id')}`), {
-      method: 'DELETE', identity: actor, tool: 'slimweb_external_assets_delete', permission: 'page_management_external_assets', idempotencyKey: this.idempotencyKeyFactory(), body: {}
+      method: 'DELETE', identity: actor, tool: 'slimweb_external_assets_delete', idempotencyKey: this.idempotencyKeyFactory(), body: {}
     });
   }
 
@@ -608,7 +595,6 @@ export class SlimWebBackendRepository {
     return this.request(this.sitePath(actor, '/commerce/settings/providers'), {
       identity: actor,
       tool: 'slimweb_payment_logistics_get',
-      permission: 'payments_shipping'
     });
   }
 
@@ -617,98 +603,97 @@ export class SlimWebBackendRepository {
       method: 'PUT',
       identity: actor,
       tool: 'slimweb_payment_logistics_update',
-      permission: 'payments_shipping',
       idempotencyKey: this.idempotencyKeyFactory(),
       body: this.withoutSiteSelector(args)
     });
   }
 
   async listCouponTemplates(actor, args) {
-    return this.commerceList(actor, '/commerce/coupon-templates', 'slimweb_coupon_templates_list', 'coupon_management', args, ['issue_trigger', 'keyword', 'status', 'page', 'per_page']);
+    return this.commerceList(actor, '/commerce/coupon-templates', 'slimweb_coupon_templates_list', args, ['issue_trigger', 'keyword', 'status', 'page', 'per_page']);
   }
 
   async upsertCouponTemplate(actor, args) {
-    return this.commerceMutation(actor, '/commerce/coupon-templates', 'PUT', 'slimweb_coupon_templates_upsert', 'coupon_management', args);
+    return this.commerceMutation(actor, '/commerce/coupon-templates', 'PUT', 'slimweb_coupon_templates_upsert', args);
   }
 
   async issueMemberCoupon(actor, args) {
-    return this.commerceMutation(actor, `/commerce/members/${this.requiredId(args?.member_id, 'member_id')}/coupons`, 'POST', 'slimweb_members_coupons_issue', 'coupon_management', args, ['member_id']);
+    return this.commerceMutation(actor, `/commerce/members/${this.requiredId(args?.member_id, 'member_id')}/coupons`, 'POST', 'slimweb_members_coupons_issue', args, ['member_id']);
   }
 
   async listMembers(actor, args) {
-    return this.commerceList(actor, '/commerce/members', 'slimweb_members_list', 'member_list', args, ['keyword', 'status', 'min_spent', 'max_spent', 'page', 'per_page']);
+    return this.commerceList(actor, '/commerce/members', 'slimweb_members_list', args, ['keyword', 'status', 'min_spent', 'max_spent', 'page', 'per_page']);
   }
 
   async getMember(actor, args) {
-    return this.request(this.sitePath(actor, `/commerce/members/${this.requiredId(args?.member_id, 'member_id')}`), { identity: actor, tool: 'slimweb_members_get', permission: 'member_list' });
+    return this.request(this.sitePath(actor, `/commerce/members/${this.requiredId(args?.member_id, 'member_id')}`), { identity: actor, tool: 'slimweb_members_get' });
   }
 
   async deleteMember(actor, args) {
-    return this.commerceMutation(actor, `/commerce/members/${this.requiredId(args?.member_id, 'member_id')}`, 'DELETE', 'slimweb_members_delete', 'member_list', args, ['member_id']);
+    return this.commerceMutation(actor, `/commerce/members/${this.requiredId(args?.member_id, 'member_id')}`, 'DELETE', 'slimweb_members_delete', args, ['member_id']);
   }
 
   async revokeMemberCoupon(actor, args) {
-    return this.commerceMutation(actor, `/commerce/members/${this.requiredId(args?.member_id, 'member_id')}/coupons/${this.requiredId(args?.member_coupon_id, 'member_coupon_id')}`, 'DELETE', 'slimweb_members_coupons_revoke', 'member_list', args, ['member_id', 'member_coupon_id']);
+    return this.commerceMutation(actor, `/commerce/members/${this.requiredId(args?.member_id, 'member_id')}/coupons/${this.requiredId(args?.member_coupon_id, 'member_coupon_id')}`, 'DELETE', 'slimweb_members_coupons_revoke', args, ['member_id', 'member_coupon_id']);
   }
 
   async listDiscountCodes(actor, args) {
-    return this.commerceList(actor, '/commerce/discount-codes', 'slimweb_discount_codes_list', 'discount_code_management', args, ['keyword', 'platform', 'page', 'per_page']);
+    return this.commerceList(actor, '/commerce/discount-codes', 'slimweb_discount_codes_list', args, ['keyword', 'platform', 'page', 'per_page']);
   }
 
   async upsertDiscountCode(actor, args) {
-    return this.commerceMutation(actor, '/commerce/discount-codes', 'PUT', 'slimweb_discount_codes_upsert', 'discount_code_management', args);
+    return this.commerceMutation(actor, '/commerce/discount-codes', 'PUT', 'slimweb_discount_codes_upsert', args);
   }
 
   async deleteDiscountCode(actor, args) {
-    return this.commerceMutation(actor, `/commerce/discount-codes/${this.requiredId(args?.discount_code_id, 'discount_code_id')}`, 'DELETE', 'slimweb_discount_codes_delete', 'discount_code_management', args, ['discount_code_id']);
+    return this.commerceMutation(actor, `/commerce/discount-codes/${this.requiredId(args?.discount_code_id, 'discount_code_id')}`, 'DELETE', 'slimweb_discount_codes_delete', args, ['discount_code_id']);
   }
 
   async listMemberTiers(actor) {
-    return this.request(this.sitePath(actor, '/commerce/member-tiers'), { identity: actor, tool: 'slimweb_member_tiers_list', permission: 'member_levels' });
+    return this.request(this.sitePath(actor, '/commerce/member-tiers'), { identity: actor, tool: 'slimweb_member_tiers_list' });
   }
 
   async upsertMemberTier(actor, args) {
-    return this.commerceMutation(actor, '/commerce/member-tiers', 'PUT', 'slimweb_member_tiers_upsert', 'member_levels', args);
+    return this.commerceMutation(actor, '/commerce/member-tiers', 'PUT', 'slimweb_member_tiers_upsert', args);
   }
 
   async deleteMemberTier(actor, args) {
-    return this.commerceMutation(actor, `/commerce/member-tiers/${this.requiredId(args?.member_tier_id, 'member_tier_id')}`, 'DELETE', 'slimweb_member_tiers_delete', 'member_levels', args, ['member_tier_id']);
+    return this.commerceMutation(actor, `/commerce/member-tiers/${this.requiredId(args?.member_tier_id, 'member_tier_id')}`, 'DELETE', 'slimweb_member_tiers_delete', args, ['member_tier_id']);
   }
 
   async listThresholdGifts(actor, args) {
-    return this.commerceList(actor, '/commerce/threshold-gifts', 'slimweb_threshold_gifts_list', 'threshold_gift_management', args, ['is_active']);
+    return this.commerceList(actor, '/commerce/threshold-gifts', 'slimweb_threshold_gifts_list', args, ['is_active']);
   }
 
   async upsertThresholdGift(actor, args) {
-    return this.commerceMutation(actor, '/commerce/threshold-gifts', 'PUT', 'slimweb_threshold_gifts_upsert', 'threshold_gift_management', args);
+    return this.commerceMutation(actor, '/commerce/threshold-gifts', 'PUT', 'slimweb_threshold_gifts_upsert', args);
   }
 
   async deleteThresholdGift(actor, args) {
-    return this.commerceMutation(actor, `/commerce/threshold-gifts/${this.requiredId(args?.threshold_gift_id, 'threshold_gift_id')}`, 'DELETE', 'slimweb_threshold_gifts_delete', 'threshold_gift_management', args, ['threshold_gift_id']);
+    return this.commerceMutation(actor, `/commerce/threshold-gifts/${this.requiredId(args?.threshold_gift_id, 'threshold_gift_id')}`, 'DELETE', 'slimweb_threshold_gifts_delete', args, ['threshold_gift_id']);
   }
 
   async listProductAddOns(actor, args) {
-    return this.commerceList(actor, '/commerce/product-add-ons', 'slimweb_product_add_ons_list', 'add_on_product_management', args, ['product_id', 'is_active']);
+    return this.commerceList(actor, '/commerce/product-add-ons', 'slimweb_product_add_ons_list', args, ['product_id', 'is_active']);
   }
 
   async upsertProductAddOn(actor, args) {
-    return this.commerceMutation(actor, '/commerce/product-add-ons', 'PUT', 'slimweb_product_add_ons_upsert', 'add_on_product_management', args);
+    return this.commerceMutation(actor, '/commerce/product-add-ons', 'PUT', 'slimweb_product_add_ons_upsert', args);
   }
 
   async deleteProductAddOn(actor, args) {
-    return this.commerceMutation(actor, `/commerce/product-add-ons/${this.requiredId(args?.product_add_on_id, 'product_add_on_id')}`, 'DELETE', 'slimweb_product_add_ons_delete', 'add_on_product_management', args, ['product_add_on_id']);
+    return this.commerceMutation(actor, `/commerce/product-add-ons/${this.requiredId(args?.product_add_on_id, 'product_add_on_id')}`, 'DELETE', 'slimweb_product_add_ons_delete', args, ['product_add_on_id']);
   }
 
-  async getLineBotSettings(actor) { return this.operationalRead(actor, '/integrations/line-bot', 'slimweb_line_bot_settings_get', 'integration_settings'); }
-  async getLineBotQrCode(actor) { return this.request(this.sitePath(actor, '/integrations/line-bot/qrcode'), {method:'POST',identity:actor,tool:'slimweb_line_bot_qrcode_get',permission:'integration_settings',body:{}}); }
-  async getLineFriendStats(actor) { return this.operationalRead(actor, '/integrations/line-friends/stats', 'slimweb_line_friends_stats', 'integration_settings'); }
-  async listLineMembers(actor,args) { return this.commerceList(actor,'/integrations/line-friends/members','slimweb_line_members_list','integration_settings',args,['gender','country','city','birthday','birthday_month','birthday_from','birthday_to','names','limit','offset']); }
+  async getLineBotSettings(actor) { return this.operationalRead(actor, '/integrations/line-bot', 'slimweb_line_bot_settings_get'); }
+  async getLineBotQrCode(actor) { return this.request(this.sitePath(actor, '/integrations/line-bot/qrcode'), {method:'POST',identity:actor,tool:'slimweb_line_bot_qrcode_get',body:{}}); }
+  async getLineFriendStats(actor) { return this.operationalRead(actor, '/integrations/line-friends/stats', 'slimweb_line_friends_stats'); }
+  async listLineMembers(actor,args) { return this.commerceList(actor,'/integrations/line-friends/members','slimweb_line_members_list',args,['gender','country','city','birthday','birthday_month','birthday_from','birthday_to','names','limit','offset']); }
   async prepareLinePush(actor,args) {
     const key=String(args?.idempotency_key??'');
     if(!/^[A-Za-z0-9._:-]{8,128}$/.test(key)) throw new BackendError('Stable idempotency_key required.',{code:'VALIDATION_ERROR'});
     if(!Array.isArray(args?.messages)||args.messages.length<1||args.messages.length>5) throw new BackendError('One to five message objects required.',{code:'VALIDATION_ERROR'});
     const body=this.withoutSiteSelector(args);delete body.idempotency_key;
-    return this.request(this.sitePath(actor,'/integrations/line-push/prepare'),{method:'POST',identity:actor,tool:'slimweb_line_push_prepare',permission:'integration_settings',idempotencyKey:key,body});
+    return this.request(this.sitePath(actor,'/integrations/line-push/prepare'),{method:'POST',identity:actor,tool:'slimweb_line_push_prepare',idempotencyKey:key,body});
   }
   linePushId(args) {
     const id=String(args?.operation_id??'');
@@ -717,19 +702,19 @@ export class SlimWebBackendRepository {
   }
   async sendLinePush(actor,args) {
     if(args?.confirmed!==true||!/^[a-f0-9]{64}$/.test(String(args?.review_hash??''))) throw new BackendError('Explicit final confirmation and review_hash required.',{code:'VALIDATION_ERROR'});
-    return this.request(this.sitePath(actor,`/integrations/line-push/${this.linePushId(args)}/send`),{method:'POST',identity:actor,tool:'slimweb_line_push_send',permission:'integration_settings',body:{confirmed:true,review_hash:args.review_hash}});
+    return this.request(this.sitePath(actor,`/integrations/line-push/${this.linePushId(args)}/send`),{method:'POST',identity:actor,tool:'slimweb_line_push_send',body:{confirmed:true,review_hash:args.review_hash}});
   }
-  async getLinePushStatus(actor,args) { return this.operationalRead(actor,`/integrations/line-push/${this.linePushId(args)}`,'slimweb_line_push_status','integration_settings'); }
-  async updateLineBotSettings(actor, args) { return this.operationalMutation(actor, '/integrations/line-bot', 'slimweb_line_bot_settings_update', 'integration_settings', args); }
-  async getLineAiSettings(actor) { return this.operationalRead(actor, '/integrations/line-ai', 'slimweb_line_ai_settings_get', 'integration_settings'); }
-  async updateLineAiSettings(actor, args) { return this.operationalMutation(actor, '/integrations/line-ai', 'slimweb_line_ai_settings_update', 'integration_settings', args); }
-  async listLineRichMenus(actor) { return this.operationalRead(actor, '/integrations/line-rich-menus', 'slimweb_line_rich_menus_list', 'integration_settings'); }
+  async getLinePushStatus(actor,args) { return this.operationalRead(actor,`/integrations/line-push/${this.linePushId(args)}`,'slimweb_line_push_status'); }
+  async updateLineBotSettings(actor, args) { return this.operationalMutation(actor, '/integrations/line-bot', 'slimweb_line_bot_settings_update', args); }
+  async getLineAiSettings(actor) { return this.operationalRead(actor, '/integrations/line-ai', 'slimweb_line_ai_settings_get'); }
+  async updateLineAiSettings(actor, args) { return this.operationalMutation(actor, '/integrations/line-ai', 'slimweb_line_ai_settings_update', args); }
+  async listLineRichMenus(actor) { return this.operationalRead(actor, '/integrations/line-rich-menus', 'slimweb_line_rich_menus_list'); }
   lineRichMenuId(args) {
     const id = String(args?.rich_menu_id ?? '');
     if (!/^[A-Za-z0-9_-]{1,128}$/.test(id)) throw new BackendError('Invalid rich_menu_id.', {code:'VALIDATION_ERROR'});
     return encodeURIComponent(id);
   }
-  async getLineRichMenu(actor, args) { return this.operationalRead(actor, `/integrations/line-rich-menus/${this.lineRichMenuId(args)}`, 'slimweb_line_rich_menus_get', 'integration_settings'); }
+  async getLineRichMenu(actor, args) { return this.operationalRead(actor, `/integrations/line-rich-menus/${this.lineRichMenuId(args)}`, 'slimweb_line_rich_menus_get'); }
   async createLineRichMenu(actor, args) { return this.lineRichMenuMutation(actor, args, 'create'); }
   async publishLineRichMenu(actor, args) { return this.lineRichMenuMutation(actor, args, 'publish'); }
   async deleteLineRichMenu(actor, args) { return this.lineRichMenuMutation(actor, args, 'delete'); }
@@ -739,23 +724,23 @@ export class SlimWebBackendRepository {
     if (action === 'create' && args?.areas?.some(area => !['uri','message','richmenuswitch','clipboard'].includes(area?.action?.type))) throw new BackendError('Unsupported Rich Menu action type.', {code:'VALIDATION_ERROR'});
     const suffix = action === 'create' ? '' : `/${this.lineRichMenuId(args)}${action === 'publish' ? '/publish' : ''}`;
     const body = this.withoutSiteSelector(args); delete body.rich_menu_id;
-    return this.request(this.sitePath(actor, `/integrations/line-rich-menus${suffix}`), {method:action === 'delete' ? 'DELETE' : 'POST',identity:actor,tool:`slimweb_line_rich_menus_${action}`,permission:'integration_settings',idempotencyKey:key,body});
+    return this.request(this.sitePath(actor, `/integrations/line-rich-menus${suffix}`), {method:action === 'delete' ? 'DELETE' : 'POST',identity:actor,tool:`slimweb_line_rich_menus_${action}`,idempotencyKey:key,body});
   }
 
   async getInvoiceSettings(actor) {
-    return this.request(this.sitePath(actor, '/commerce/settings/invoice'), { identity: actor, tool: 'slimweb_invoice_settings_get', permission: 'payments_shipping' });
+    return this.request(this.sitePath(actor, '/commerce/settings/invoice'), { identity: actor, tool: 'slimweb_invoice_settings_get' });
   }
 
   async updateInvoiceSettings(actor, args) {
-    return this.commerceMutation(actor, '/commerce/settings/invoice', 'PUT', 'slimweb_invoice_settings_update', 'payments_shipping', args);
+    return this.commerceMutation(actor, '/commerce/settings/invoice', 'PUT', 'slimweb_invoice_settings_update', args);
   }
 
   async listInvoices(actor, args) {
-    return this.commerceList(actor, '/commerce/invoices', 'slimweb_invoices_list', 'invoices_management', args, ['order_id', 'status', 'provider', 'mode', 'keyword', 'date_from', 'date_to', 'limit', 'offset']);
+    return this.commerceList(actor, '/commerce/invoices', 'slimweb_invoices_list', args, ['order_id', 'status', 'provider', 'mode', 'keyword', 'date_from', 'date_to', 'limit', 'offset']);
   }
 
   async getInvoice(actor, args) {
-    return this.request(this.sitePath(actor, `/commerce/invoices/${this.requiredId(args?.invoice_id, 'invoice_id')}`), { identity: actor, tool: 'slimweb_invoices_get', permission: 'invoices_management' });
+    return this.request(this.sitePath(actor, `/commerce/invoices/${this.requiredId(args?.invoice_id, 'invoice_id')}`), { identity: actor, tool: 'slimweb_invoices_get' });
   }
 
   async createInvoice(actor, args) { return this.invoiceMutation(actor, args, 'create'); }
@@ -763,7 +748,7 @@ export class SlimWebBackendRepository {
   async voidInvoice(actor, args) { return this.invoiceMutation(actor, args, 'void'); }
   async allowanceInvoice(actor, args) { return this.invoiceMutation(actor, args, 'allowance'); }
   async syncInvoice(actor, args) {
-    return this.commerceMutation(actor, `/commerce/invoices/${this.requiredId(args?.invoice_id, 'invoice_id')}/sync`, 'POST', 'slimweb_invoices_sync', 'invoices_management', args, ['invoice_id']);
+    return this.commerceMutation(actor, `/commerce/invoices/${this.requiredId(args?.invoice_id, 'invoice_id')}/sync`, 'POST', 'slimweb_invoices_sync', args, ['invoice_id']);
   }
 
   async invoiceMutation(actor, args, action) {
@@ -780,104 +765,102 @@ export class SlimWebBackendRepository {
     const suffix = action === 'create' ? '' : `/${this.requiredId(args?.invoice_id, 'invoice_id')}/${action}`;
     const body = this.withoutSiteSelector(args);
     delete body.invoice_id;
-    return this.request(this.sitePath(actor, `/commerce/invoices${suffix}`), { method: 'POST', identity: actor, tool: `slimweb_invoices_${action}`, permission: 'invoices_management', idempotencyKey: key, body });
+    return this.request(this.sitePath(actor, `/commerce/invoices${suffix}`), { method: 'POST', identity: actor, tool: `slimweb_invoices_${action}`, idempotencyKey: key, body });
   }
 
   async listOrders(actor, args) {
-    return this.commerceList(actor, '/commerce/orders', 'slimweb_orders_list', 'orders_management', args, ['search_order_no', 'search_field', 'search_value', 'fuzzy', 'date_from', 'date_to', 'amount_min', 'amount_max', 'logistics_status', 'statuses', 'limit', 'offset']);
+    return this.commerceList(actor, '/commerce/orders', 'slimweb_orders_list', args, ['search_order_no', 'search_field', 'search_value', 'fuzzy', 'date_from', 'date_to', 'amount_min', 'amount_max', 'logistics_status', 'statuses', 'limit', 'offset']);
   }
 
   async calculateOrderProfitStatistics(actor, args) {
-    return this.commerceList(actor, '/commerce/orders/profit-statistics', 'slimweb_orders_profit_statistics', 'order_profit_statistics', args, ['date_from', 'date_to']);
+    return this.commerceList(actor, '/commerce/orders/profit-statistics', 'slimweb_orders_profit_statistics', args, ['date_from', 'date_to']);
   }
 
   async getOrder(actor, args) {
-    return this.commerceList(actor, '/commerce/orders/detail', 'slimweb_orders_get', 'orders_management', args, ['order_id', 'order_no']);
+    return this.commerceList(actor, '/commerce/orders/detail', 'slimweb_orders_get', args, ['order_id', 'order_no']);
   }
 
   async createOrderLogistics(actor, args) {
-    return this.commerceMutation(actor, '/commerce/orders/logistics', 'POST', 'slimweb_orders_create_logistics', 'payments_shipping', args);
+    return this.commerceMutation(actor, '/commerce/orders/logistics', 'POST', 'slimweb_orders_create_logistics', args);
   }
 
   async markOrderShipped(actor, args) {
-    return this.commerceMutation(actor, '/commerce/orders/mark-shipped', 'POST', 'slimweb_orders_mark_shipped', 'orders_management', args);
+    return this.commerceMutation(actor, '/commerce/orders/mark-shipped', 'POST', 'slimweb_orders_mark_shipped', args);
   }
 
   async listPendingReturns(actor, args) {
-    return this.commerceList(actor, '/commerce/returns/pending', 'slimweb_returns_pending_list', 'returns_management', args, ['search_order_no', 'limit', 'offset']);
+    return this.commerceList(actor, '/commerce/returns/pending', 'slimweb_returns_pending_list', args, ['search_order_no', 'limit', 'offset']);
   }
 
   async createReturnLogistics(actor, args) {
-    return this.commerceMutation(actor, '/commerce/returns/logistics', 'POST', 'slimweb_returns_create_logistics', 'returns_management', args);
+    return this.commerceMutation(actor, '/commerce/returns/logistics', 'POST', 'slimweb_returns_create_logistics', args);
   }
 
   async cancelReturn(actor, args) {
-    return this.commerceMutation(actor, '/commerce/returns/cancel', 'POST', 'slimweb_returns_cancel', 'returns_management', args);
+    return this.commerceMutation(actor, '/commerce/returns/cancel', 'POST', 'slimweb_returns_cancel', args);
   }
 
   async completeReturn(actor, args) {
-    return this.commerceMutation(actor, '/commerce/returns/complete', 'POST', 'slimweb_returns_complete', 'returns_management', args);
+    return this.commerceMutation(actor, '/commerce/returns/complete', 'POST', 'slimweb_returns_complete', args);
   }
 
   async completeRefund(actor, args) {
-    return this.commerceMutation(actor, '/commerce/refunds/complete', 'POST', 'slimweb_refunds_complete', 'returns_management', args);
+    return this.commerceMutation(actor, '/commerce/refunds/complete', 'POST', 'slimweb_refunds_complete', args);
   }
 
   async createRefund(actor, args) {
-    return this.commerceMutation(actor, '/commerce/refunds', 'POST', 'slimweb_refunds_create', 'returns_management', args);
+    return this.commerceMutation(actor, '/commerce/refunds', 'POST', 'slimweb_refunds_create', args);
   }
 
   async updateOrdersStatus(actor, args) {
-    return this.commerceMutation(actor, '/commerce/orders/status', 'PATCH', 'slimweb_orders_update_status', 'orders_management', args);
+    return this.commerceMutation(actor, '/commerce/orders/status', 'PATCH', 'slimweb_orders_update_status', args);
   }
 
   async updateOrdersRecipient(actor, args) {
-    return this.commerceMutation(actor, '/commerce/orders/recipient', 'PATCH', 'slimweb_orders_update_recipient', 'orders_management', args);
+    return this.commerceMutation(actor, '/commerce/orders/recipient', 'PATCH', 'slimweb_orders_update_recipient', args);
   }
 
   async deleteOrders(actor, args) {
-    return this.commerceMutation(actor, '/commerce/orders', 'DELETE', 'slimweb_orders_delete', 'orders_management', args);
+    return this.commerceMutation(actor, '/commerce/orders', 'DELETE', 'slimweb_orders_delete', args);
   }
 
   async getWaybillUrl(actor, args) {
-    return this.orderWaybill(actor, '/commerce/orders/waybill-url', 'slimweb_orders_get_waybill_url', 'orders_management', args);
+    return this.orderWaybill(actor, '/commerce/orders/waybill-url', 'slimweb_orders_get_waybill_url', args);
   }
 
   async getReturnWaybillUrl(actor, args) {
-    return this.orderWaybill(actor, '/commerce/returns/waybill-url', 'slimweb_returns_get_waybill_url', 'returns_management', args);
+    return this.orderWaybill(actor, '/commerce/returns/waybill-url', 'slimweb_returns_get_waybill_url', args);
   }
 
-  async orderWaybill(actor, suffix, tool, permission, args) {
+  async orderWaybill(actor, suffix, tool, args) {
     return this.request(this.sitePath(actor, suffix), {
       method: 'POST',
       identity: actor,
       tool,
-      permission,
       body: this.withoutSiteSelector(args)
     });
   }
 
-  async operationalRead(actor, suffix, tool, permission, args = {}, fields = []) {
+  async operationalRead(actor, suffix, tool, args = {}, fields = []) {
     const query = new URLSearchParams();
     const filters = this.withoutSiteSelector(args);
     for (const field of fields) {
       if (filters[field] !== undefined && filters[field] !== null && filters[field] !== '') query.set(field, String(filters[field]));
     }
-    return this.request(this.sitePath(actor, `${suffix}${query.size ? `?${query}` : ''}`), { identity: actor, tool, permission });
+    return this.request(this.sitePath(actor, `${suffix}${query.size ? `?${query}` : ''}`), { identity: actor, tool });
   }
 
-  async operationalMutation(actor, suffix, tool, permission, args, method = 'PUT') {
+  async operationalMutation(actor, suffix, tool, args, method = 'PUT') {
     return this.request(this.sitePath(actor, suffix), {
       method,
       identity: actor,
       tool,
-      permission,
       idempotencyKey: this.idempotencyKeyFactory(),
       body: this.withoutSiteSelector(args)
     });
   }
 
-  async commerceList(actor, suffix, tool, permission, args, fields) {
+  async commerceList(actor, suffix, tool, args, fields) {
     const filters = this.withoutSiteSelector(args);
     const query = new URLSearchParams();
     for (const field of fields) {
@@ -889,21 +872,20 @@ export class SlimWebBackendRepository {
         }
       }
     }
-    return this.request(this.sitePath(actor, `${suffix}${query.size ? `?${query}` : ''}`), { identity: actor, tool, permission });
+    return this.request(this.sitePath(actor, `${suffix}${query.size ? `?${query}` : ''}`), { identity: actor, tool });
   }
 
-  async commerceMutation(actor, suffix, method, tool, permission, args, removedFields = []) {
+  async commerceMutation(actor, suffix, method, tool, args, removedFields = []) {
     const body = this.withoutSiteSelector(args);
     for (const field of removedFields) delete body[field];
-    return this.request(this.sitePath(actor, suffix), { method, identity: actor, tool, permission, idempotencyKey: this.idempotencyKeyFactory(), body });
+    return this.request(this.sitePath(actor, suffix), { method, identity: actor, tool, idempotencyKey: this.idempotencyKeyFactory(), body });
   }
 
-  async catalogMutation(actor, suffix, method, tool, permission, args) {
+  async catalogMutation(actor, suffix, method, tool, args) {
     return this.request(this.sitePath(actor, suffix), {
       method,
       identity: actor,
       tool,
-      permission,
       idempotencyKey: this.idempotencyKeyFactory(),
       body: this.withoutSiteSelector(args)
     });
@@ -947,7 +929,8 @@ export class SlimWebBackendRepository {
       path,
       identity: options.identity,
       tool: options.tool ?? '',
-      permission: options.permission ?? '',
+      // Advisory transport metadata comes from the same policy; backend authorization uses its server-owned route.
+      permission: operationRequirement(options.tool)?.any[0] ?? operationRequirement(options.tool)?.all.at(-1) ?? '',
       body: options.body,
       idempotencyKey: options.idempotencyKey
     });

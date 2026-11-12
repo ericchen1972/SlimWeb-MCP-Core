@@ -1,10 +1,15 @@
+import {operationAllowed} from './operationPolicy.js';
+import {redactToolResult} from './resultSafety.js';
+import {createToolLimiter} from './toolLimiter.js';
 import { handleOAuth } from './oauth.js';
 import { readFileSync } from 'node:fs';
 import { MERCHANT_CAPABILITY_URI, MERCHANT_CAPABILITY_GUIDANCE } from './merchantCapabilities.js';
 import { handleEventMethod } from './events.js';
 const MERCHANT_CAPABILITY_GUIDE = readFileSync(new URL('./merchant-capabilities.md', import.meta.url), 'utf8');
 function serverInstructions(context) {
-  return [context.toolProfile.serverGuidelines ?? MCP_SERVER_GUIDELINES, MERCHANT_CAPABILITY_GUIDANCE].join(' ');
+  return [context.toolProfile.serverGuidelines ?? MCP_SERVER_GUIDELINES, MERCHANT_CAPABILITY_GUIDANCE,
+    'When a tool returns confirmation_required, show the confirmation_url to the human. The same merchant must open it, review the fixed action and approve before you retry the unchanged operation. Never approve it yourself, including through browser automation; confirmed/buyer_agreed parameters cannot grant approval. For RATE_LIMIT_EXCEEDED, respect retry_after and do not loop or change identities to bypass limits.'
+  ].join(' ');
 }
 import { LINE_TOOLS, LINE_METHODS } from './lineTools.js';
 const PRODUCT_BINDING_GUIDANCE = 'Product layout contract: fixed products is a category-list template, not all products; its preview uses the first category. Never link to /products without a valid category. Create an all-products custom page only when requested. Wrap each product in a non-clickable container with data-product-id="<actual ID>"; do not nest containers. Mark every product name/original-price/special-price occurrence, including inline marketing text, with data-product-field="name", "original-price", or "special-price" (use spans inline). Price fields render grouped numbers; keep currency outside or use data-product-prefix/suffix. Use an anchor data-product-action="view" with the actual product href and a disabled button type="button" data-product-action="add-to-cart". The shared storefront runtime fetches current site-scoped data, updates names/prices and cart attributes, removes only confirmed hidden/deleted blocks, retains sold-out blocks, and preserves content on lookup failure. Missing/expired special price uses the original price. Other copy/images remain unchanged. Do not write product hydration JS.';
@@ -2766,147 +2771,6 @@ const BASE_TOOL_NAMES = new Set([
   'slimweb_site_select'
 ]);
 
-const TOOL_PERMISSION_RULES = {
-  slimweb_themes_list: ['page_management', 'page_management_templates'],
-  slimweb_site_theme_mode_get: ['page_management', 'page_management_templates'],
-  slimweb_design_context_get: ['page_management', 'page_management_templates'],
-  slimweb_site_theme_mode_update: ['page_management', 'page_management_templates'],
-  slimweb_themes_create_from_default: ['page_management', 'page_management_templates'],
-  slimweb_themes_create_from_theme: ['page_management', 'page_management_templates'],
-  slimweb_themes_activate: ['page_management', 'page_management_templates'],
-  slimweb_themes_delete: ['page_management', 'page_management_templates'],
-  slimweb_theme_shell_get_context: ['page_management', 'page_management_templates'],
-  slimweb_themes_update_root_elements: ['page_management', 'page_management_templates'],
-  slimweb_theme_style_profile_get: ['page_management', 'page_management_templates'],
-  slimweb_theme_style_profile_upsert: ['page_management', 'page_management_templates'],
-  slimweb_theme_style_profile_append_request: ['page_management', 'page_management_templates'],
-  slimweb_site_readiness_get: [],
-  slimweb_site_launch_progress_get: [],
-  slimweb_seo_settings_get: ['seo_settings'],
-  slimweb_seo_settings_update: ['seo_settings'],
-  slimweb_facebook_settings_get: ['integration_settings'],
-  slimweb_facebook_settings_update: ['integration_settings'],
-  slimweb_notion_settings_get: ['integration_settings'],
-  slimweb_notion_settings_update: ['integration_settings'],
-  slimweb_notion_pages_search: ['integration_settings', 'article_management', 'article_list'],
-  slimweb_notion_page_get_content: ['integration_settings', 'article_management', 'article_list'],
-  slimweb_contact_settings_get: ['basic_settings'],
-  slimweb_contact_settings_update: ['basic_settings'],
-  slimweb_mail_delivery_settings_get: ['mail_settings'],
-  slimweb_mail_delivery_settings_update: ['mail_settings'],
-  slimweb_mail_templates_get: ['mail_settings'],
-  slimweb_mail_templates_update: ['mail_settings'],
-  slimweb_mail_layout_get: ['mail_settings'],
-  slimweb_mail_layout_update: ['mail_settings'],
-  slimweb_payment_logistics_get: ['payment_logistics'],
-  slimweb_payment_logistics_update: ['payment_logistics'],
-  ...Object.fromEntries(LINE_TOOLS.map(tool => [tool.name, ['integration_settings', ...(/line_(friends_stats|members_list|push_)/.test(tool.name) ? ['member_management','member_list'] : [])]])),
-  ...Object.fromEntries(INVOICE_TOOLS.map(tool => [tool.name, [tool.name.startsWith('slimweb_invoice_settings_') ? 'payments_shipping' : 'invoices_management']])),
-  slimweb_orders_list: ['orders_management'],
-  slimweb_orders_profit_statistics: ['orders_management'],
-  slimweb_orders_get: ['orders_management'],
-  slimweb_orders_create_logistics: ['orders_management'],
-  slimweb_orders_mark_shipped: ['orders_management'],
-  slimweb_orders_update_status: ['order_management', 'order_list'],
-  slimweb_orders_update_recipient: ['order_management', 'order_list'],
-  slimweb_orders_delete: ['order_management', 'order_list'],
-  slimweb_orders_get_waybill_url: ['order_management', 'order_list'],
-  slimweb_returns_get_waybill_url: ['order_management', 'return_requests'],
-  slimweb_returns_pending_list: ['orders_management'],
-  slimweb_returns_create_logistics: ['orders_management'],
-  slimweb_returns_cancel: ['orders_management'],
-  slimweb_returns_complete: ['orders_management'],
-  slimweb_refunds_complete: ['orders_management'],
-  slimweb_refunds_create: ['orders_management'],
-  slimweb_dashboard_summary: [],
-  slimweb_settings_get: ['basic_settings'],
-  slimweb_settings_update: ['basic_settings'],
-  slimweb_admins_list: ['system_admin'],
-  slimweb_admins_upsert: ['system_admin'],
-  slimweb_admins_delete: ['system_admin'],
-  slimweb_external_assets_list: ['page_management', 'page_management_external_assets'],
-  slimweb_external_assets_delete: ['page_management', 'page_management_external_assets'],
-  slimweb_images_import_chatgpt_attachment: [],
-  slimweb_debug_attachment_refs: [],
-  slimweb_uploads_create: [],
-  slimweb_uploads_commit: [],
-  slimweb_media_library_stats: [],
-  slimweb_media_library_delete_unused: [],
-  slimweb_articles_list: ['article_management', 'article_list'],
-  slimweb_articles_check_title: ['article_management', 'article_list'],
-  slimweb_articles_get_content: ['article_management', 'article_list'],
-  slimweb_articles_create: ['article_management', 'article_list'],
-  slimweb_articles_update: ['article_management', 'article_list'],
-  slimweb_articles_delete: ['article_management', 'article_list'],
-  slimweb_content_seo_update: ['page_management', 'page_management_pages', 'article_management', 'article_list'],
-  slimweb_categories_list: ['product_management', 'product_management_categories'],
-  slimweb_categories_upsert: ['product_management', 'product_management_categories'],
-  slimweb_categories_delete: ['product_management', 'product_management_categories'],
-  slimweb_nav_items_list: ['page_management', 'page_management_navbar'],
-  slimweb_nav_items_upsert: ['page_management', 'page_management_navbar'],
-  slimweb_nav_items_delete: ['page_management', 'page_management_navbar'],
-  slimweb_products_list: ['product_management', 'product_management_products'],
-  slimweb_products_get: ['product_management', 'product_management_products'],
-  slimweb_products_upsert: ['product_management', 'product_management_products'],
-  slimweb_products_delete: ['product_management', 'product_management_products'],
-  slimweb_members_delete: ['member_management', 'member_list'],
-  slimweb_members_coupons_revoke: ['member_management', 'member_coupons'],
-  slimweb_newsletters_list: ['ai_management', 'ai_marketing_email'],
-  slimweb_newsletters_get: ['ai_management', 'ai_marketing_email'],
-  slimweb_newsletters_update: ['ai_management', 'ai_marketing_email'],
-  slimweb_newsletters_delete: ['ai_management', 'ai_marketing_email'],
-  slimweb_discount_codes_delete: ['discount_management', 'discount_codes'],
-  slimweb_member_tiers_delete: ['member_management', 'member_tiers'],
-  slimweb_threshold_gifts_delete: ['discount_management', 'threshold_gifts'],
-  slimweb_product_add_ons_delete: ['product_management', 'product_management_add_ons'],
-  slimweb_customer_service_logs_delete: ['ai_management', 'customer_service_logs'],
-  slimweb_products_import_inspect: ['product_management', 'product_management_import'],
-  slimweb_products_import_validate: ['product_management', 'product_management_import'],
-  slimweb_products_import_commit: ['product_management', 'product_management_import'],
-  slimweb_coupon_templates_list: ['discount_management', 'coupon_templates'],
-  slimweb_coupon_templates_upsert: ['discount_management', 'coupon_templates'],
-  slimweb_members_coupons_issue: ['discount_management', 'coupon_templates'],
-  slimweb_members_list: ['member_management', 'member_list'],
-  slimweb_members_get: ['member_management', 'member_list'],
-  slimweb_member_email_preview: ['member_management', 'member_list'],
-  slimweb_member_email_send: ['member_management', 'member_list'],
-  slimweb_newsletters_create: ['member_management', 'member_list'],
-  slimweb_posters_create: ['product_management', 'product_management_products'],
-  slimweb_discount_codes_list: ['discount_management', 'discount_codes'],
-  slimweb_discount_codes_upsert: ['discount_management', 'discount_codes'],
-  slimweb_member_tiers_list: ['member_management', 'member_tiers'],
-  slimweb_member_tiers_upsert: ['member_management', 'member_tiers'],
-  slimweb_threshold_gifts_list: ['discount_management', 'threshold_gifts'],
-  slimweb_threshold_gifts_upsert: ['discount_management', 'threshold_gifts'],
-  slimweb_product_add_ons_list: ['product_management', 'product_management_add_ons'],
-  slimweb_product_add_ons_upsert: ['product_management', 'product_management_add_ons'],
-  slimweb_customer_service_logs_list: ['customer_service_logs'],
-  slimweb_customer_service_settings_get: ['ai_management', 'ai_customer_service'],
-  slimweb_customer_service_settings_update: ['ai_management', 'ai_customer_service'],
-  slimweb_exports_create: ['system_admin'],
-  slimweb_audit_list: ['system_admin'],
-  slimweb_assets_upload: [],
-  slimweb_pages_list: ['page_management', 'page_management_pages'],
-  slimweb_pages_check_title: ['page_management', 'page_management_pages'],
-  slimweb_pages_get_content: ['page_management', 'page_management_pages'],
-  slimweb_pages_create: ['page_management', 'page_management_pages'],
-  slimweb_pages_update: ['page_management', 'page_management_pages'],
-  slimweb_preview_get_page_url: ['page_management', 'page_management_pages'],
-  slimweb_pages_delete: ['page_management', 'page_management_pages']
-};
-
-function permissionSet(permissions) {
-  return new Set(Array.isArray(permissions) ? permissions.filter((permission) => typeof permission === 'string') : []);
-}
-
-function hasAnyPermission(permissions, required) {
-  if (required.length === 0) {
-    return true;
-  }
-
-  const available = permissionSet(permissions);
-  return required.some((permission) => available.has(permission) || available.has('system_admin'));
-}
 
 function sessionIdentity(session) {
   return {
@@ -2945,22 +2809,8 @@ async function toolsForSession(session, context, request) {
   const scopedSites = identity.site_id
     ? sites.filter((site) => String(site.site_id ?? site.id) === String(identity.site_id))
     : sites;
-  const union = new Set();
-
-  for (const site of scopedSites) {
-    for (const permission of site.permissions ?? []) {
-      union.add(permission);
-    }
-  }
-
-  return profiledTools.filter((tool) => {
-    if (BASE_TOOL_NAMES.has(tool.name)) {
-      return true;
-    }
-
-    const required = TOOL_PERMISSION_RULES[tool.name] ?? [];
-    return hasAnyPermission(Array.from(union), required);
-  }).map(publicTool);
+  return profiledTools.filter((tool) => BASE_TOOL_NAMES.has(tool.name)
+    || scopedSites.some(site => operationAllowed(site.permissions,tool.name))).map(publicTool);
 }
 
 function forbiddenError(message) {
@@ -2988,12 +2838,11 @@ async function actorForTool(session, name, args, context) {
     args.site_id = actor.site_id;
   }
 
-  if (!hasAnyPermission(actor.permissions, ['backend_ai_assistant'])) {
+  if (!operationAllowed(actor.permissions, 'events/unsubscribe')) {
     throw forbiddenError('This web admin does not have backend AI assistant permission.');
   }
 
-  const required = TOOL_PERMISSION_RULES[name] ?? [];
-  if (!hasAnyPermission(actor.permissions, required)) {
+  if (!operationAllowed(actor.permissions, name, args)) {
     throw forbiddenError(`This web admin does not have permission to use ${name}.`);
   }
 
@@ -4536,8 +4385,15 @@ async function handleMcpMessage(message, request, context) {
         )
       });
 
-    case 'tools/call':
-      return toolResultForCall(message, request, context);
+    case 'tools/call': {
+      let release;
+      try {
+        if (request.slimwebVerifiedIdentity) release=context.toolLimiter.acquire(request.slimwebVerifiedIdentity);
+        return redactToolResult(await toolResultForCall(message, request, context));
+      } catch (error) {
+        return redactToolResult(toolExceptionToMcpError(id,error));
+      } finally { release?.(); }
+    }
 
     case 'resources/list':
       return mcpResult(id, {
@@ -5023,6 +4879,7 @@ function createDefaultContext(options = {}) {
 
 export function createRequestHandler(options = {}) {
   const context = createDefaultContext(options);
+  context.toolLimiter=createToolLimiter();
 
   return async function requestHandler(request, response) {
     const url = new URL(request.url, 'http://localhost');
