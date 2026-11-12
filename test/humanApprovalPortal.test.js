@@ -13,7 +13,9 @@ test('the browser Google nonce challenge expires within two minutes', async () =
   fixture(async ({ request }) => {
     const page = await request();
     const encoded = cookie(page).split('=')[1].split('.')[0];
-    const challenge = JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8'));
+    const challenge = JSON.parse(
+      Buffer.from(encoded, 'base64url').toString('utf8'),
+    );
     assert.ok(challenge.expires_at <= Math.floor(Date.now() / 1000) + 120);
     assert.match(page.headers.get('set-cookie'), /Max-Age=120;/);
   }));
@@ -52,6 +54,7 @@ async function fixture(run, options = {}) {
       sessionSecret: 'human-portal-test-secret-32-bytes',
       publicBaseUrl: origin,
       googleClientId: 'google-client',
+      humanApprovalGoogleClientId: 'approval-only-google-client',
       humanApprovalTransport: transport,
       ...options,
     }),
@@ -68,6 +71,16 @@ async function fixture(run, options = {}) {
     await new Promise((r) => server.close(r));
   }
 }
+test('ordinary Google client ID alone never enables the approval portal', async () =>
+  fixture(
+    async ({ request, calls }) => {
+      const response = await request();
+      assert.equal(response.status, 503);
+      assert.equal(calls.length, 0);
+      assert.equal(response.headers.get('set-cookie'), null);
+    },
+    { humanApprovalGoogleClientId: '' },
+  ));
 function cookie(response) {
   return response.headers
     .getSetCookie()
@@ -304,6 +317,7 @@ test('nonce-authorized script loads Google and renders only a button until the h
     external.onload();
     assert.equal(buttons, 1);
     assert.equal(config.auto_select, false);
+    assert.equal(config.client_id, 'approval-only-google-client');
     assert.equal(config.nonce, hidden(html, 'google_nonce'));
     assert.equal(fetches, 0);
     assert.equal(calls.length, 0);

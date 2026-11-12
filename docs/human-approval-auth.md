@@ -6,6 +6,28 @@ Merchant pages and ordinary OAuth, browser-session, or Bearer credentials cannot
 authorize this portal. AI clients must present the link to the person and wait;
 they must never approve automatically or ask for approval credentials.
 
+## Dedicated Google audience
+
+Configure `HUMAN_APPROVAL_GOOGLE_CLIENT_ID` (or the explicit
+`humanApprovalGoogleClientId` option) with an approval-only Google web client.
+Its authorized JavaScript origins must contain only the two canonical hosted
+merchant MCP service origins. Do not authorize merchant pages, the SaaS web
+origin, consumer MCP, localhost, or extra aliases. No redirect URI or client
+secret is required for this GSI button flow.
+
+The approval portal never falls back to ordinary `GOOGLE_CLIENT_ID`. A production
+handler with an approval transport refuses startup when the approval client ID
+is missing or equals the ordinary login client ID. The central PHP verifier must
+use the same dedicated approval audience and reject ordinary-login tokens.
+
+A fresh nonce does not establish the JavaScript origin that obtained a Google
+ID token: Google ID tokens do not carry that origin binding. A shared audience
+also authorized on a merchant page would allow that page to obtain a credential
+for a relayed nonce. Restricting the dedicated audience's authorized origins is
+therefore part of this authentication boundary, in addition to nonce, CSRF,
+cookie, freshness, identity, and one-use checks. Ordinary Google login continues
+to use its existing client ID and tokens.
+
 ## Browser flow
 
 1. The person explicitly clicks the Google sign-in button. The server creates a

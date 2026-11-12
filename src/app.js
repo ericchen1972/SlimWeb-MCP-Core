@@ -4855,6 +4855,12 @@ function handleServiceInfo(response, context) {
 
 function createDefaultContext(options = {}) {
   const runtimeConfig = resolveRuntimeConfig(options);
+  if (runtimeConfig.runtimeMode === 'production' && options.humanApprovalTransport && !runtimeConfig.humanApprovalGoogleClientId) {
+    throw new Error('Production human approval requires HUMAN_APPROVAL_GOOGLE_CLIENT_ID.');
+  }
+  if (runtimeConfig.runtimeMode === 'production' && options.humanApprovalTransport && runtimeConfig.humanApprovalGoogleClientId === runtimeConfig.googleClientId) {
+    throw new Error('Human approval requires a separate Google client ID distinct from ordinary login.');
+  }
   if (options.requireResourceContext && !['parse', 'validateAfterIdentity', 'equals', 'appendToUrl', 'resourceUrl'].every(key => typeof options.resourceContext?.[key] === 'function')) {
     throw new TypeError('A complete resourceContext adapter is required.');
   }
@@ -4864,6 +4870,7 @@ function createDefaultContext(options = {}) {
 
   return {
     googleClientId: runtimeConfig.googleClientId,
+    humanApprovalGoogleClientId: runtimeConfig.humanApprovalGoogleClientId,
     humanApprovalTransport: options.humanApprovalTransport ?? null,
     googleVerifier: options.googleVerifier ?? new GoogleIdentityVerifier({...options, clientId: runtimeConfig.googleClientId}),
     accountRepository: options.accountRepository,

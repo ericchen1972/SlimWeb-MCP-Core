@@ -143,7 +143,7 @@ export function createHumanApprovalPortal(context) {
         typeof context.sessionSecret !== 'string' ||
         context.sessionSecret.length < 16 ||
         !context.publicBaseUrl ||
-        !context.googleClientId
+        !context.humanApprovalGoogleClientId
       ) {
         fail(503);
         return true;
@@ -344,7 +344,7 @@ export function createHumanApprovalPortal(context) {
       const message = zh
         ? '請使用原本操作的 Google 帳號重新登入，查看固定預覽後親自核准。此次登入只用於確認這筆要求。'
         : 'Sign in again with the Google account that requested this action, then review and approve it. This login only authorizes review of this request.';
-      const script = `window.approvalGoogleReady=function(){google.accounts.id.initialize({client_id:${js(context.googleClientId)},nonce:${js(challenge.nonce)},auto_select:false,callback:async function(result){try{const r=await fetch(${js(path + '&action=login')},{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',redirect:'manual',body:JSON.stringify({credential:result.credential,nonce:${js(challenge.nonce)},csrf:${js(challenge.csrf)}})});if(r.type==='opaqueredirect'||r.status===303){location.assign(${js(path)});return;}document.getElementById('error').textContent=${js(zh ? '登入未完成，請重新開啟確認連結。' : 'Login failed. Reopen the review link.')};}catch{document.getElementById('error').textContent=${js(zh ? '暫時無法登入，請稍後再試。' : 'Login unavailable. Try again later.')};}}});google.accounts.id.renderButton(document.getElementById('google-button'),{type:'standard',theme:'outline',text:'signin_with',size:'large'});};`;
+      const script = `window.approvalGoogleReady=function(){google.accounts.id.initialize({client_id:${js(context.humanApprovalGoogleClientId)},nonce:${js(challenge.nonce)},auto_select:false,callback:async function(result){try{const r=await fetch(${js(path + '&action=login')},{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',redirect:'manual',body:JSON.stringify({credential:result.credential,nonce:${js(challenge.nonce)},csrf:${js(challenge.csrf)}})});if(r.type==='opaqueredirect'||r.status===303){location.assign(${js(path)});return;}document.getElementById('error').textContent=${js(zh ? '登入未完成，請重新開啟確認連結。' : 'Login failed. Reopen the review link.')};}catch{document.getElementById('error').textContent=${js(zh ? '暫時無法登入，請稍後再試。' : 'Login unavailable. Try again later.')};}}});google.accounts.id.renderButton(document.getElementById('google-button'),{type:'standard',theme:'outline',text:'signin_with',size:'large'});};`;
       const load = `const gsi=document.createElement('script');gsi.src='https://accounts.google.com/gsi/client';gsi.nonce=${js(nonce)};gsi.async=true;gsi.onload=window.approvalGoogleReady;document.head.append(gsi);`;
       html(
         response,

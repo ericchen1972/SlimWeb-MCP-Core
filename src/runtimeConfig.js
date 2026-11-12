@@ -4,6 +4,7 @@ export function resolveRuntimeConfig(options = {}, env = process.env) {
   if (!['production', 'development', 'test'].includes(runtimeMode)) throw new Error('Invalid MCP runtime mode.');
   const localMode = runtimeMode !== 'production';
   const googleClientId = String(options.googleClientId ?? env.GOOGLE_CLIENT_ID ?? '').trim();
+  const humanApprovalGoogleClientId = String(options.humanApprovalGoogleClientId ?? env.HUMAN_APPROVAL_GOOGLE_CLIENT_ID ?? '').trim();
   let publicBaseUrl = String(options.publicBaseUrl ?? env.PUBLIC_BASE_URL ?? '').trim();
   const secureCookies = options.secureCookies ?? true;
   if (!localMode && (!googleClientId || !publicBaseUrl || secureCookies !== true)) {
@@ -19,5 +20,5 @@ export function resolveRuntimeConfig(options = {}, env = process.env) {
     }
     publicBaseUrl = url.origin;
   }
-  return { runtimeMode, googleClientId, publicBaseUrl, secureCookies };
+  return { runtimeMode, googleClientId, humanApprovalGoogleClientId, publicBaseUrl, secureCookies };
 }
