@@ -4597,10 +4597,12 @@ function sameOriginNextPath(next) {
   try {
     if (next.startsWith('/')) {
       const parsed = new URL(next, 'https://local.invalid');
+      if (parsed.pathname.startsWith('//')) return '/auth/success';
       return `${parsed.pathname}${parsed.search}${parsed.hash}`;
     }
 
     const parsed = new URL(next);
+    if (parsed.pathname.startsWith('//')) return '/auth/success';
     return `${parsed.pathname}${parsed.search}${parsed.hash}`;
   } catch {
     return '/auth/success';
@@ -4661,7 +4663,7 @@ function mcpAuthRequiredResponse(request, response, context) {
 
 function loginPage(context, nextPath = '/auth/success', resourceContext = null) {
   const clientId = context.googleClientId;
-  const next = sameOriginNextPath(nextPath);
+  const next = contextualUrl(sameOriginNextPath(nextPath), resourceContext, context);
   const googleLoginPath = contextualUrl('/auth/google', resourceContext, context);
 
   return `<!doctype html>
