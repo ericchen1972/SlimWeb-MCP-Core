@@ -17,6 +17,7 @@ import { INVOICE_TOOLS, INVOICE_METHODS } from './invoiceTools.js';
 import path from 'node:path';
 
 import { GoogleIdentityVerifier } from './googleVerifier.js';
+import { createHumanApprovalPortal } from './humanApprovalPortal.js';
 import { resolveRuntimeConfig } from './runtimeConfig.js';
 import {
   sessionCookie,
@@ -4863,6 +4864,7 @@ function createDefaultContext(options = {}) {
 
   return {
     googleClientId: runtimeConfig.googleClientId,
+    humanApprovalTransport: options.humanApprovalTransport ?? null,
     googleVerifier: options.googleVerifier ?? new GoogleIdentityVerifier({...options, clientId: runtimeConfig.googleClientId}),
     accountRepository: options.accountRepository,
     toolProfile: options.toolProfile ?? createToolProfile(),
@@ -4880,6 +4882,7 @@ function createDefaultContext(options = {}) {
 export function createRequestHandler(options = {}) {
   const context = createDefaultContext(options);
   context.toolLimiter=createToolLimiter();
+  const humanApprovalPortal=createHumanApprovalPortal(context);
 
   return async function requestHandler(request, response) {
     const url = new URL(request.url, 'http://localhost');
@@ -4895,6 +4898,8 @@ export function createRequestHandler(options = {}) {
       });
       return;
     }
+
+    if (await humanApprovalPortal(request,response)) return;
 
     if (url.pathname === '/' || url.pathname === '/healthz' || url.pathname === '/readyz') {
       if (request.method !== 'GET') {
