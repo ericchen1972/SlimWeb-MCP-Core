@@ -56,6 +56,7 @@ export function createSessionToken(account, secret, now = Date.now(), extraClaim
     google_id: account.google_id ?? account.google_sub ?? null,
     site_id: account.site_id ?? null,
     ...extraClaims,
+    typ: 'session',
     iat: Math.floor(now / 1000),
     exp: Math.floor(now / 1000) + DEFAULT_TTL_SECONDS
   };
@@ -65,7 +66,7 @@ export function createSessionToken(account, secret, now = Date.now(), extraClaim
 
 export function verifySessionToken(token, secret, now = Date.now()) {
   const payload = verifySignedToken(token, secret);
-  if (!payload || !payload.exp || payload.exp < Math.floor(now / 1000)) {
+  if (!payload || payload.typ !== 'session' || !Number.isFinite(payload.exp) || payload.exp <= Math.floor(now / 1000)) {
     return null;
   }
 

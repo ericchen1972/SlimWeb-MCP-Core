@@ -1,3 +1,4 @@
+import { handleOAuth } from './oauth.js';
 import { readFileSync } from 'node:fs';
 import { MERCHANT_CAPABILITY_URI, MERCHANT_CAPABILITY_GUIDANCE } from './merchantCapabilities.js';
 import { handleEventMethod } from './events.js';
@@ -8,17 +9,14 @@ function serverInstructions(context) {
 import { LINE_TOOLS, LINE_METHODS } from './lineTools.js';
 const PRODUCT_BINDING_GUIDANCE = 'Product layout contract: fixed products is a category-list template, not all products; its preview uses the first category. Never link to /products without a valid category. Create an all-products custom page only when requested. Wrap each product in a non-clickable container with data-product-id="<actual ID>"; do not nest containers. Mark every product name/original-price/special-price occurrence, including inline marketing text, with data-product-field="name", "original-price", or "special-price" (use spans inline). Price fields render grouped numbers; keep currency outside or use data-product-prefix/suffix. Use an anchor data-product-action="view" with the actual product href and a disabled button type="button" data-product-action="add-to-cart". The shared storefront runtime fetches current site-scoped data, updates names/prices and cart attributes, removes only confirmed hidden/deleted blocks, retains sold-out blocks, and preserves content on lookup failure. Missing/expired special price uses the original price. Other copy/images remain unchanged. Do not write product hydration JS.';
 import { INVOICE_TOOLS, INVOICE_METHODS } from './invoiceTools.js';
-import { createHash, randomBytes } from 'node:crypto';
 import path from 'node:path';
 
 import { GoogleIdentityVerifier } from './googleVerifier.js';
 import {
   createSessionToken,
-  createSignedToken,
   readSessionToken,
   sessionCookie,
-  verifySessionToken,
-  verifySignedToken
+  verifySessionToken
 } from './session.js';
 import { createToolProfile } from './toolProfile.js';
 import { createNullResourceContext, resourceContextMismatchError } from './resourceContext.js';
@@ -263,7 +261,6 @@ const POSTER_PREVIEW_WIDGET_HTML = `<!doctype html>
   </script>
 </body>
 </html>`;
-const OAUTH_CODE_TTL_SECONDS = 10 * 60;
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
 const EMPTY_INPUT_SCHEMA = {
   type: 'object',
@@ -4751,8 +4748,8 @@ function oauthAuthorizationServerMetadata(baseUrl) {
     registration_endpoint: `${baseUrl}/oauth/register`,
     response_types_supported: ['code'],
     grant_types_supported: ['authorization_code'],
-    code_challenge_methods_supported: ['S256', 'plain'],
-    token_endpoint_auth_methods_supported: ['none', 'client_secret_post'],
+    code_challenge_methods_supported: ['S256'],
+    token_endpoint_auth_methods_supported: ['none'],
     scopes_supported: ['mcp'],
     service_documentation: 'https://slimweb.tw'
   };
@@ -4846,54 +4843,6 @@ function loginPage(context, nextPath = '/auth/success', resourceContext = null) 
 </html>`;
 }
 
-function createOAuthCode(session, params, context) {
-  const now = Math.floor(Date.now() / 1000);
-
-  return createSignedToken({
-    typ: 'oauth_code',
-    account_id: session.account_id,
-    email: session.email,
-    name: session.name,
-    google_id: session.google_id,
-    resource_context: session.resource_context ?? null,
-    client_id: params.get('client_id'),
-    redirect_uri: params.get('redirect_uri'),
-    scope: params.get('scope') || 'mcp',
-    code_challenge: params.get('code_challenge') || '',
-    code_challenge_method: params.get('code_challenge_method') || '',
-    iat: now,
-    exp: now + OAUTH_CODE_TTL_SECONDS
-  }, context.sessionSecret);
-}
-
-function verifyOAuthCode(code, context) {
-  const payload = verifySignedToken(code, context.sessionSecret);
-  const now = Math.floor(Date.now() / 1000);
-
-  if (!payload || payload.typ !== 'oauth_code' || !payload.exp || payload.exp < now) {
-    return null;
-  }
-
-  return payload;
-}
-
-function verifyPkce(payload, codeVerifier) {
-  if (!payload.code_challenge) {
-    return true;
-  }
-
-  if (!codeVerifier) {
-    return false;
-  }
-
-  if (payload.code_challenge_method === 'plain') {
-    return codeVerifier === payload.code_challenge;
-  }
-
-  const digest = createHash('sha256').update(codeVerifier).digest('base64url');
-  return digest === payload.code_challenge;
-}
-
 function handleOAuthProtectedResource(request, response, context) {
   jsonResponse(response, 200, oauthProtectedResourceMetadata(
     requestBaseUrl(request, context),
@@ -4904,124 +4853,6 @@ function handleOAuthProtectedResource(request, response, context) {
 
 function handleOAuthAuthorizationServer(request, response, context) {
   jsonResponse(response, 200, oauthAuthorizationServerMetadata(requestBaseUrl(request, context)));
-}
-
-async function handleOAuthRegister(request, response) {
-  if (request.method !== 'POST') {
-    methodNotAllowed(response);
-    return;
-  }
-
-  const body = await readOAuthBody(request);
-  const redirectUris = Array.isArray(body.redirect_uris) ? body.redirect_uris : [];
-
-  jsonResponse(response, 201, {
-    client_id: `swmcp_${randomBytes(16).toString('hex')}`,
-    client_id_issued_at: Math.floor(Date.now() / 1000),
-    client_name: body.client_name || 'ChatGPT',
-    redirect_uris: redirectUris,
-    grant_types: ['authorization_code'],
-    response_types: ['code'],
-    token_endpoint_auth_method: 'none'
-  });
-}
-
-async function handleOAuthAuthorize(request, response, context) {
-  if (request.method !== 'GET') {
-    methodNotAllowed(response);
-    return;
-  }
-
-  const authorizeUrl = new URL(request.url, 'http://localhost');
-  const params = authorizeUrl.searchParams;
-  const redirectUri = params.get('redirect_uri');
-  const state = params.get('state');
-  const clientId = params.get('client_id');
-
-  if (params.get('response_type') !== 'code' || !clientId || !redirectUri) {
-    oauthErrorResponse(response, 400, 'invalid_request', 'response_type=code, client_id, and redirect_uri are required.');
-    return;
-  }
-
-  const session = verifySessionToken(readSessionToken(request), context.sessionSecret);
-  if (!session) {
-    const loginPath = contextualUrl(
-      `/auth/login?next=${encodeURIComponent(`${authorizeUrl.pathname}${authorizeUrl.search}`)}`,
-      requestResourceContext(request),
-      context
-    );
-    redirectResponse(response, loginPath);
-    return;
-  }
-
-  try {
-    assertResourceContextMatches(session, request, context);
-  } catch (error) {
-    oauthErrorResponse(response, error.status ?? 401, 'invalid_target', error.code);
-    return;
-  }
-
-  const callbackUrl = new URL(redirectUri);
-  callbackUrl.searchParams.set('code', createOAuthCode(session, params, context));
-  if (state) {
-    callbackUrl.searchParams.set('state', state);
-  }
-
-  redirectResponse(response, callbackUrl.toString());
-}
-
-async function handleOAuthToken(request, response, context) {
-  if (request.method !== 'POST') {
-    methodNotAllowed(response);
-    return;
-  }
-
-  const body = await readOAuthBody(request);
-
-  if (body.grant_type !== 'authorization_code') {
-    oauthErrorResponse(response, 400, 'unsupported_grant_type', 'Only authorization_code is supported.');
-    return;
-  }
-
-  const payload = verifyOAuthCode(body.code, context);
-  if (!payload) {
-    oauthErrorResponse(response, 400, 'invalid_grant', 'Authorization code is invalid or expired.');
-    return;
-  }
-
-  if (body.client_id && body.client_id !== payload.client_id) {
-    oauthErrorResponse(response, 400, 'invalid_grant', 'client_id does not match authorization code.');
-    return;
-  }
-
-  if (body.redirect_uri !== payload.redirect_uri) {
-    oauthErrorResponse(response, 400, 'invalid_grant', 'redirect_uri does not match authorization code.');
-    return;
-  }
-
-  if (!verifyPkce(payload, body.code_verifier)) {
-    oauthErrorResponse(response, 400, 'invalid_grant', 'PKCE verification failed.');
-    return;
-  }
-
-  const accessToken = createSessionToken({
-    id: payload.account_id,
-    email: payload.email,
-    name: payload.name,
-    google_id: payload.google_id
-  }, context.sessionSecret, Date.now(), {
-    resource_context: payload.resource_context ?? null
-  });
-
-  jsonResponse(response, 200, {
-    access_token: accessToken,
-    token_type: 'Bearer',
-    expires_in: SESSION_TTL_SECONDS,
-    scope: payload.scope || 'mcp'
-  }, {
-    'cache-control': 'no-store',
-    pragma: 'no-cache'
-  });
 }
 
 async function handleGoogleLogin(request, response, context) {
@@ -5155,6 +4986,7 @@ function createDefaultContext(options = {}) {
     toolProfileResolver: options.toolProfileResolver ?? null,
     eventsResolver: options.eventsResolver ?? null,
     resourceContext: options.resourceContext ?? createNullResourceContext(),
+    oauthStore: options.oauthStore ?? null,
     sessionSecret: options.sessionSecret ?? process.env.MCP_SESSION_SECRET,
     publicBaseUrl: options.publicBaseUrl ?? process.env.PUBLIC_BASE_URL ?? '',
     secureCookies: options.secureCookies ?? process.env.NODE_ENV === 'production'
@@ -5249,20 +5081,7 @@ export function createRequestHandler(options = {}) {
       return;
     }
 
-    if (url.pathname === '/oauth/register') {
-      await handleOAuthRegister(request, response);
-      return;
-    }
-
-    if (url.pathname === '/oauth/authorize') {
-      await handleOAuthAuthorize(request, response, context);
-      return;
-    }
-
-    if (url.pathname === '/oauth/token') {
-      await handleOAuthToken(request, response, context);
-      return;
-    }
+    if (await handleOAuth(request, response, context, { assertResourceContextMatches, contextualUrl, requestResourceContext })) return;
 
     if (url.pathname === '/mcp') {
       await handleMcp(request, response, context);

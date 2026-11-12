@@ -1,0 +1,11 @@
+# OAuth state and migration
+
+OAuth requires an injected `oauthStore` with asynchronous `put(kind, key, value, expiresAt)`, `get(kind, key)`, and `take(kind, key)` methods. Keys are SHA-256 hex strings; kinds are `client`, `consent`, and `code`. Missing values return `null`. `put` must create only, reject collisions, and expire records at the given Unix second. `take` must atomically remove and return one unexpired value across every worker and replica. Persistent shared storage is mandatory; there is no in-memory fallback. Encrypt stored values and authenticate the storage API.
+
+The SaaS shell uses the Webless backend database cache and lock table through `/internal/mcp/v1/oauth-state/{kind}/{key}`. Deploy the backend support before the updated shell/Core. Missing storage returns HTTP 503 for OAuth rather than issuing untracked credentials. Other Core consumers, including standalone shells, must provide an equivalent durable implementation before enabling OAuth.
+
+Clients register exact HTTPS callback URIs (HTTP loopback callbacks are permitted for local clients). Client registrations expire after 90 days. Authorization requires S256 PKCE and explicit consent; consent is bound to the logged-in session, resource context and immutable original request, expires after five minutes, and is consumed once. Authorization codes are opaque 256-bit random values, expire after two minutes and can only be exchanged once with the registered client, exact redirect URI and verifier. Browser pages do not expose codes until approval and use no-store, no-referrer and frame restrictions.
+
+Session verification now requires `typ=session`. Existing untyped browser sessions and access tokens intentionally stop authenticating; users must reconnect and clients must register again. Authorization codes cannot authenticate tool calls. Access-token TTL and revocation remain a separate approved future batch; the existing seven-day TTL is unchanged here.
+
+Validation: `npm test` includes authorization-code misuse, redirect and PKCE rejection, consent denial/CSRF/session binding, expiration, concurrent code exchange, replay, storage absence and fresh-handler continuity. Backend tests must additionally prove shared-storage atomic consumption and persistence.
