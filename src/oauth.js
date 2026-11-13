@@ -291,7 +291,9 @@ export async function handleOAuth(
         'cache-control': 'no-store',
         'referrer-policy': 'no-referrer',
         'content-security-policy':
-          "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
+          // Chromium also checks the form's redirect destination. Only allow
+          // the origin of the exact registered callback validated above.
+          "default-src 'none'; style-src 'unsafe-inline'; form-action 'self' " + new URL(p.redirect_uri).origin + "; frame-ancestors 'none'; base-uri 'none'",
       });
       response.end(
         '<!doctype html><html lang="' +
