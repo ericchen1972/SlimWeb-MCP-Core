@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "guide_version": "sha256:41e62bc272eebecd832363f25c6e3f13e6bf31dfb7ba4a9524871599bc57f672",
+  "guide_version": "sha256:d15d5f966eff076069828f27130a9d2765bbff7b327813fa48aabfaad304af95",
   "topics": [
     {
       "topic": "capability-map",
       "file": "capability-map.md",
-      "sha256": "41750046ce6510436ce9d31214c6c2c1e3bc0cb2c692f42cfebd8a4c0ada9dda",
-      "bytes": 49381
+      "sha256": "39c585ef7df3364c0579252398092370d555e94a4b08788584edd4cb21e45dbc",
+      "bytes": 48144
     },
     {
       "topic": "catalog-navigation",
@@ -41,8 +41,8 @@
     {
       "topic": "marketing-campaigns",
       "file": "marketing-campaigns.md",
-      "sha256": "ab17cd0d4d2e9913d745395aa6e1ced8482c8ebb33cf28acd2de0171eabc6a95",
-      "bytes": 10775
+      "sha256": "82cda9a208518f04153f5c075b96d6b449601a47d8ee43f168256830eb684b2d",
+      "bytes": 10720
     },
     {
       "topic": "media-upload-flow",
@@ -53,8 +53,8 @@
     {
       "topic": "overview",
       "file": "overview.md",
-      "sha256": "0380c69fd2b0b5efb1dc8314004137412789ca0112988e4adf54eb5180bc492f",
-      "bytes": 17584
+      "sha256": "518c9ed5ee85af4694d5a95ed27395717b461cdea8f5ff8c259434a997bfddd1",
+      "bytes": 15865
     },
     {
       "topic": "theme-page-workflows",

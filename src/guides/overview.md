@@ -30,7 +30,7 @@ Translate merchant language into candidate capabilities before searching tool na
 
 Before declaring a request unsupported: inspect current tools/list and schemas, read the site's relevant list/get state, compare native and composed options, check calculation/scope/activation limits, and explain any difference. Distinguish native support, composed alternative, setup required, Web-only/current-connection unavailable, unverified, and an unsupported exact rule. Missing tools or credentials do not establish platform-wide absence. Respect each tool's existing confirmation and site-selection rules.
 
-For promotions, load [Marketing Campaigns](references/marketing-campaigns.md). Do not default every campaign to coupons. Quantity tiers, product sale prices, add-ons, threshold gifts, member tiers, coupons, codes and shipping rules solve different needs. Check boundary quantities, variants, stacking and percent units before recommending or writing. Content-only campaigns do not enable checkout rules. For stacking or price questions, use the capability-map checkout section: add-ons do not repeat quantity reductions, the highest attained tier can be zero, native cart/checkout, consumer client_order_preview/drafts and LINE cart quotes share authoritative server pricing but do not create a Merchant MCP quote tool. Read the capability-map quote section before explaining consumer/LINE tools, saved selection handoff, draft expiry, payment/store readiness or provider limits. Add-on limits apply separately to each normal parent cart line, including its variant; sum add-on variants within that parent and never transfer its allowance to another parent.
+For promotions, load [Marketing Campaigns](references/marketing-campaigns.md). Do not default every campaign to coupons. Quantity tiers, product sale prices, add-ons, threshold gifts, member tiers, coupons, codes and shipping rules solve different needs. Check boundary quantities, variants, stacking and percent units before recommending or writing. Content-only campaigns do not enable checkout rules. For stacking or price questions, use the capability-map checkout section: add-ons do not repeat quantity reductions, the highest attained tier can be zero, native cart/checkout, LINE cart quotes share authoritative server pricing but do not create a Merchant MCP quote tool. Read the capability-map quote section before explaining LINE tools, saved selection handoff, payment/store readiness or provider limits. Add-on limits apply separately to each normal parent cart line, including its variant; sum add-on variants within that parent and never transfer its allowance to another parent.
 
 Quick routes: catalog/import → [Catalog](references/catalog-navigation.md); payments/logistics → [Commerce](references/commerce-settings.md); LINE setup → [LINE](references/line-bot-setup.md). For orders, returns/refunds, invoices, email/newsletters, LINE menus/push, reporting/exports, AI setup and Web-only capabilities use the matching capability-map rows and current tool schemas.
 
@@ -43,17 +43,6 @@ When the user asks where to start, says they are new, or asks what is still miss
 - Do not dump the full checklist unless the user asks.
 - Do not treat every user as a beginner if the progress tool shows work has already been completed.
 
-## Consumer MCP URL
-
-When the merchant asks how customers can use AI with their storefront, or when you are helping prepare the homepage, member center, or customer-support entry points, use `slimweb_settings_get` to read `settings.client_mcp_url`.
-
-The `client_mcp_url` is the site-specific consumer MCP endpoint. It is meant for shoppers and members, not the store admin. Customers can connect this URL in supported AI clients so the AI can help them interact with the storefront, such as browsing products, checking member or order flows when authenticated, and getting customer-support assistance through the consumer-facing MCP surface.
-
-Explain this in practical merchant language: "This is the AI connection link for your customers." Encourage the merchant to publish it where customers naturally start: the homepage, member center, footer, or customer-service area. A homepage button such as "Use AI shopping assistant" or "Connect this store to your AI assistant" is usually clearer than hiding the link in settings.
-
-For a Standalone site, verify that the returned consumer endpoint is actually deployed for that installation and its backend service authentication is configured before recommending it or claiming consumer AI works. A central SaaS consumer URL does not automatically target a Standalone installation. Shared pricing code and local tests establish calculation behavior, not the live consumer connection. Report an unavailable endpoint or backend authentication separately from pricing support.
-
-Do not treat `client_mcp_url` as an editable setting. It is returned by `slimweb_settings_get` for discovery and publishing guidance.
 
 ## Reference Websites And Visual JavaScript
 

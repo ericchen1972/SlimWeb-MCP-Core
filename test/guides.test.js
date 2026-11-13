@@ -43,6 +43,10 @@ test('authenticated clients discover current guide catalog and exact hashed topi
     assert.equal(guide.guide_version, index.guide_version);
     assert.equal(guide.sha256, createHash('sha256').update(guide.content).digest('hex'));
     assert.match(guide.content, /SlimWeb/);
+    assert.doesNotMatch(guide.content, /client_mcp_url|Consumer MCP URL/);
+    const initialization = (await rpc('initialize')).result;
+    assert.doesNotMatch(initialization.instructions, /client_mcp_url|consumer MCP URL/);
+    assert.doesNotMatch(tool.description, /consumer MCP URL/);
     const resource = await rpc('resources/read', { uri: 'slimweb://guides/overview' });
     assert.equal(resource.result.contents[0].text, guide.content);
     assert.ok((await rpc('resources/list')).result.resources.some(entry => entry.uri === 'slimweb://guides/index'));

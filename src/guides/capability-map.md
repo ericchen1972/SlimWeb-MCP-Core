@@ -39,7 +39,7 @@ HTTP MCP Client 先 initialize，再送不含 id 的 notifications/initialized�
 | 滿額贈禮／滿額禮 | threshold_gifts list/upsert：達金額門檻送指定商品，設定門檻、排序與啟停 | 贈品需本站 is_service=true 的服務商品；不擅自轉換現有實體商品。依商品小計扣除數量優惠、會員等級、優惠券及折扣碼後且不含運費的金額，選最高符合門檻的一份，寫入零元訂單品項；不累贈、不按件數、不當成實體贈品庫存管理 |
 | 付款與物流 | payment_logistics get/update：ECPay、NewebPay、PayNow、LINE Pay、轉帳匯款；綠界／藍新／PayNow／HCT 物流 | 以 get 回傳的支援通路與訂單 available_actions 為準；常溫、冷藏、冷凍、取貨或取貨付款各別確認。主線上金流切換需明確要求；activation_deferred 是儲存待啟用 |
 | 運費與滿額免運 | Web Admin 的運費設定：國內／海外費用與各自免運門檻 | 網站已有，盤點的 Merchant MCP 沒有運費寫入欄位；不要發明 shipping 工具或塞進 settings_update。免運門檻基準同為商品小計扣數量優惠後、會員等級折抵前且不含運費；門檻 0 不是自動免運，零運費與正數免運門檻含義不同 |
-| 購物車、結帳與會員購買 | 原生 storefront；consumer MCP／LINE 提供各自授權的查商品、購物車及訂單流程 | Merchant MCP 管店，不冒充消費者下單。前台重驗價格、規格、庫存、限購及促銷，歷史訂單保留快照；LINE 加車不等於建立或付款訂單 |
+| 購物車、結帳與會員購買 | 原生 storefront；LINE 提供各自授權的查商品、購物車及訂單流程 | Merchant MCP 管店，不冒充消費者下單。前台重驗價格、規格、庫存、限購及促銷，歷史訂單保留快照；LINE 加車不等於建立或付款訂單 |
 | 訂單查詢與履約 | orders list/get、狀態／收件人更新、建立物流、手動出貨、列印託運單 URL | 僅對 available_actions 提供的供應商／通路執行；出貨標記不是建立寄件單。狀態／收件人／刪單需本次指令完整訂單號；讀取列印可用查詢結果，工具不控制印表機 |
 | 退貨與退款 | returns_pending、逆物流、取消／完成退貨、refunds create/complete | 目前退貨為整單；逆物流與線上退款依 available_actions。手動記錄退款不是實際匯款；未知 unknown 結果先對帳，不重複建單 |
 | 電子發票 | invoice_settings、invoices list/get/create/issue/sync/void/allowance：訂單或獨立交易草稿、開立、作廢、折讓 | ECPay／ezPay 與金流憑證分開；草稿不等於開立；目前台幣含稅一般應稅 5%。財務操作依明確確認與穩定 key；折讓須買方同意；自動開立只作用於啟用後合格事件，未知結果先 sync |
@@ -90,7 +90,7 @@ HTTP MCP Client 先 initialize，再送不含 id 的 notifications/initialized�
 | 週末寄促銷、只寄高消費客戶、AI 每週自動寄 | newsletter／會員查詢／AI 行銷設定 | newsletter 是全有效會員；指定行銷名單與自動 AI 行銷工作流不可假裝支援 |
 | LINE 自動回覆、加入好友、做選單 | LINE Bot／AI／QR／Rich Menu | 公開問答與綁定私有資料不同；QR、驗證、回覆、發布分階段驗證 |
 | LINE 推給全部粉絲、台北生日會員 | LINE 推播與會員篩選 | all broadcast 或 bound-member multicast；先預覽確認，人口資料缺失不猜 |
-| 客人用自己的 AI 買東西、LINE 再買一次 | client_mcp_url／consumer MCP／LINE reorder | 身分和授權、加入購物車與結帳付款分開；不拿 Merchant MCP 代客操作 |
+| LINE 再買一次 | LINE reorder | 身分和授權、加入購物車與結帳付款分開；不拿 Merchant MCP 代客操作 |
 | 賺多少、缺貨有哪些、下載會員訂單 | KPI／profit statistics／exports | 計算期間與成本、分頁與截斷；不要把報表稱為會計帳或已建立檔案 |
 | 沒有設 AI Key 還能改站嗎 | 外部 AI Client＋Merchant MCP | 一般內容工具可用；後端海報、客服與 LINE AI 才需要本站 AI；Key 設定引導後台 |
 
@@ -127,18 +127,16 @@ HTTP MCP Client 先 initialize，再送不含 id 的 notifications/initialized�
 
 修復後原生購物車與結帳使用唯讀伺服器報價，與下單共用金額計算；以目前資料庫的價格、規格、優惠、會員、運費及贈品判定為準。瀏覽器舊價格、手算、活動頁及頁面 preview 都不是正式報價。報價不保留庫存、不使用優惠券、不建立訂單；下單仍再次驗證。報價尚未完成或失敗時不送單，失效品項仍可移除。超商取貨以台灣目的地及選定門市處理，國內／海外運費仍依網站設定的國別基準判定，不擅自把超商取貨解讀成全站免運。
 
-原生 storefront `cart/state operation=quote`、consumer MCP `client_order_preview`／checkout draft 與 LINE 購物車報價已共用 `StorefrontPricing`。這不新增 Merchant MCP quote 工具；三種介面的身份與操作權限仍分開，不能用商家權限冒用消費者。先讀目前 tools/list，依實際連線選工具，不發明同名工具。以下是已覆蓋程式路徑與本機驗證邊界，不宣稱正式部署、真實 LINE、付款或出貨驗收已完成。
+原生 storefront `cart/state operation=quote` 與 LINE 購物車報價已共用 `StorefrontPricing`。這不新增 Merchant MCP quote 工具；各介面的身份與操作權限仍分開，不能用商家權限冒用消費者。先讀目前 tools/list，依實際連線選工具，不發明同名工具。以下是已覆蓋程式路徑與本機驗證邊界，不宣稱正式部署、真實 LINE、付款或出貨驗收已完成。
 
-### Consumer and LINE quote tools and limits
+### LINE quote tools and limits
 
 
-- `App\Services\StorefrontPricing` is the current authority for cart identities, available variants, shared SKU stock, per-parent add-on caps, current sale price, normal-line quantity reductions, highest attained member tier, owned coupon/code stacking, country shipping and threshold gift. Native cart/checkout/order, consumer previews/drafts and LINE quotes use it; cached browser/cart/event prices are never payable totals.
+- `App\Services\StorefrontPricing` is the current authority for cart identities, available variants, shared SKU stock, per-parent add-on caps, current sale price, normal-line quantity reductions, highest attained member tier, owned coupon/code stacking, country shipping and threshold gift. Native cart/checkout/order, LINE quotes use it; cached browser/cart/event prices are never payable totals.
 - LINE `cart_view` and post-mutation/reorder results include a refreshed `quote`. `cart_quote` is read-only and accepts hypothetical `member_coupon_id`, `discount_code`, `recipient_country`, `pickup`, `storefront_payment_method`; it does not save choices. `cart_promotions_options` returns scoped owned currently issued coupon IDs and actual enabled `checkout_choices`. `cart_promotions_set` saves only explicit customer selections for the current site/member/binding, after validation. Null coupon/empty code clear the respective selection; cart clear removes saved selections.
 - `product_details.add_ons` exposes current active available add-on targets/rules/variants. `cart_add.parent_cart_item_key` is required for an explicitly selected add-on. Existing exact-key add-on quantities can be changed; combined target variants share that parent's cap and all lines share SKU stock. Repair/removal remains possible when a promotion or line becomes invalid. Failed pricing returns actionable errors and safe identity/quantity data without stale prices.
 - LINE amount validity is `pricing_status=ok|invalid`; `checkout_status=payment_selection_required|pending_store_selection|ready` and `provider_limits` separately describe payment/logistics readiness. An unsupported pickup choice is rejected, not saved; enabled pickup is TW and still needs native store selection. Actual provider limits are checked through native checkout choices. A quote is not acceptance by a payment/logistics provider.
 - LINE selections use a two-hour site/member/binding cache and a five-minute single-use entry-grant snapshot. Browser transfer writes `storefront_cart_promotion_selection.{site}` plus `storefront_cart_promotion_owner.{site}`. Native cart discards missing/mismatched owners; logout clears both. Browser checkout revalidates all prices and selections. Bot binding revocation prevents grant exchange and personalized cart access.
-- Consumer discovery: `client_customer_context.promotion_options` returns owned coupons, tier, countries and actual payment choices; `client_product_detail` returns current add-ons and quantity rules. No discount-code enumeration. Preview/start accept at most 10 items, each quantity 1–99, explicit required variant and add-on parent identity. Use exact live schemas for camelCase consumer inputs.
-- Consumer MCP `client_product_verify` is a product/unit/quantity check, not a complete member quote. `client_order_preview` supplies the complete current server quote. `client_checkout_start` creates a 30-minute draft and an official checkout URL, not an order or payment. `client_checkout_status` refreshes owned draft pricing or returns expired/review_required without stale amounts. The browser must log into the same member, select store when required, review and confirm native checkout; no automatic store reuse. A created order is not paid merely because it exists.
 - Local regression tests cover these paths; this change alone does not establish production deployment, real LINE replies, real payment acceptance or a real shipment.
 
 
@@ -256,7 +254,7 @@ HTTP MCP Client 先 initialize，再送不含 id 的 notifications/initialized�
 - `slimweb_refunds_complete` — Manually mark an order as refunded for offline/manual refunds..
 - `slimweb_refunds_create` — Create an online card refund request for ECPay or NewebPay only when available_actions includes create_refund..
 - `slimweb_dashboard_summary` — Read dashboard KPI summary, recent orders, recent members, and low-stock products for a SlimWeb site..
-- `slimweb_settings_get` — Read the SlimWeb site name and basic settings such as status, website type, default country, product load mode, return days, category_navigation_mode, the single active site logo, and the consumer MCP URL for shoppers to install or connect supported AI clients..
+- `slimweb_settings_get` — Read the SlimWeb site name and basic settings such as status, website type, default country, product load mode, return days, category_navigation_mode, the single active site logo..
 - `slimweb_settings_update` — Update the SlimWeb site display name and basic settings, including the category navigation presentation mode and single active site logo.
 - `slimweb_admins_list` — List site admins and permission keys.
 - `slimweb_admins_upsert` — Create or update a site admin.

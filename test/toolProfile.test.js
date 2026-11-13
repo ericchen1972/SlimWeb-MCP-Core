@@ -51,7 +51,7 @@ test('default tool profile preserves the SaaS contract', async () => {
   const hash = createHash('sha256').update(JSON.stringify(existing)).digest('hex');
 
   assert.equal(tools.length, 153);
-  assert.equal(hash, '4f13fc5b6c2424d3bfd1a23442294f53a53e03f82026fdd344b071563a991476');
+  assert.equal(hash, '4941a2fee17ce48ed64aa3fcd7b8f576221a3ebff360336dc078e74ab3b82905');
 });
 
 test('page tools teach live product bindings and category-only system lists', async () => {
