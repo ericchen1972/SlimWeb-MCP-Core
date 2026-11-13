@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
+import {renderOAuthConsentPage} from './oauthConsentPage.js';
 import {
   credentialBinding, issueTokenFamily, readBrowserToken, verifyDurableToken,
   rotateRefreshToken, revokeCredential,
@@ -6,14 +7,6 @@ import {
 
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 const random = () => randomBytes(32).toString('base64url');
-const escape = (value) =>
-  String(value).replace(
-    /[&<>"']/g,
-    (c) =>
-      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[
-        c
-      ],
-  );
 const json = (res, status, body) => {
   res.writeHead(status, {
     'content-type': 'application/json',
@@ -268,7 +261,6 @@ export async function handleOAuth(
       const zh = String(request.headers['accept-language'] ?? '')
         .toLowerCase()
         .startsWith('zh');
-      const title = zh ? '授權 SlimWeb MCP' : 'Authorize SlimWeb MCP';
       const sites = await context.accountRepository.listSitesForAdminIdentity({
         account_id: session.account_id,
         email: session.email,
@@ -277,10 +269,6 @@ export async function handleOAuth(
         resource_context: session.resource_context ?? null,
         backend_grant: session.backend_grant,
       });
-      const names = sites.map((s) => escape(s.name ?? s.site_code)).join(', ');
-      const text = zh
-        ? '此應用程式將可依照你的後台權限讀取及修改以下網站，包括訂單、會員、內容與整合設定。'
-        : 'This application can read and modify these websites according to your admin permissions, including orders, members, content and integration settings.';
       const action = contextualUrl(
         '/oauth/authorize',
         requestResourceContext(request),
@@ -295,33 +283,7 @@ export async function handleOAuth(
           // the origin of the exact registered callback validated above.
           "default-src 'none'; style-src 'unsafe-inline'; form-action 'self' " + new URL(p.redirect_uri).origin + "; frame-ancestors 'none'; base-uri 'none'",
       });
-      response.end(
-        '<!doctype html><html lang="' +
-          (zh ? 'zh-Hant' : 'en') +
-          '"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' +
-          title +
-          '</title><main style="max-width:640px;margin:48px auto;font-family:system-ui;line-height:1.6"><h1>' +
-          title +
-          '</h1><p>' +
-          escape(client.client_name) +
-          '</p><p>' +
-          escape(session.email) +
-          '</p><p>' +
-          text +
-          '</p><p>' +
-          names +
-          '</p><p>' +
-          escape(p.redirect_uri) +
-          '</p><form method="post" action="' +
-          escape(action) +
-          '"><input type="hidden" name="consent_token" value="' +
-          consentToken +
-          '"><button name="decision" value="allow">✓ ' +
-          (zh ? '允許授權' : 'Allow') +
-          '</button> <button name="decision" value="deny">✕ ' +
-          (zh ? '拒絕' : 'Deny') +
-          '</button></form></main></html>',
-      );
+      response.end(renderOAuthConsentPage({zh,clientName:client.client_name,email:session.email,sites,redirectUri:p.redirect_uri,action,consentToken}));
       return true;
     }
     if (!session) {
