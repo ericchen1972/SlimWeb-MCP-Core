@@ -47,11 +47,11 @@ async function listTools(toolProfile = createToolProfile(), toolProfileResolver 
 
 test('default tool profile preserves the SaaS contract', async () => {
   const tools = await listTools();
-  const existing = tools.filter(tool => !tool.name.startsWith('slimweb_invoice') && !tool.name.startsWith('slimweb_line_'));
+  const existing = tools.filter(tool => tool.name !== 'slimweb_guides_get' && !tool.name.startsWith('slimweb_invoice') && !tool.name.startsWith('slimweb_line_'));
   const hash = createHash('sha256').update(JSON.stringify(existing)).digest('hex');
 
-  assert.equal(tools.length, 152);
-  assert.equal(hash, 'a60ba05b40fa6441bf759fa611f7acbefb10c9632342bf4f8f2ceaed23e4a46a');
+  assert.equal(tools.length, 153);
+  assert.equal(hash, '4f13fc5b6c2424d3bfd1a23442294f53a53e03f82026fdd344b071563a991476');
 });
 
 test('page tools teach live product bindings and category-only system lists', async () => {

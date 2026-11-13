@@ -120,18 +120,20 @@ test('authenticated MCP rejects cross-context bearer reuse', async () => {
     sessionSecret: 'test-secret',
     resourceContext: domainProvider()
   }, async (baseUrl) => {
+    for (const [method, params] of [['tools/list', {}], ['tools/call', { name: 'slimweb_guides_get', arguments: { topic: 'index' } }], ['resources/read', { uri: 'slimweb://guides/overview' }]]) {
     const response = await fetch(`${baseUrl}/mcp?domain=second.example.com`, {
       method: 'POST',
       headers: {
         authorization: `Bearer ${token}`,
         'content-type': 'application/json'
       },
-      body: JSON.stringify({ jsonrpc: '2.0', id: 7, method: 'tools/list' })
+      body: JSON.stringify({ jsonrpc: '2.0', id: 7, method, params })
     });
     const payload = await response.json();
 
     assert.equal(response.status, 401);
     assert.equal(payload.error.data.reason, 'DOMAIN_SESSION_MISMATCH');
+    }
   });
 });
 

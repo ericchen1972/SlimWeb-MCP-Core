@@ -10,7 +10,7 @@ const CAPABILITY_TOOLS = Object.freeze({
   line_ai_settings_write: ['slimweb_line_ai_settings_update'],
   line_rich_menus_read: ['slimweb_line_rich_menus_list', 'slimweb_line_rich_menus_get'],
   line_rich_menus_write: ['slimweb_line_rich_menus_create', 'slimweb_line_rich_menus_publish', 'slimweb_line_rich_menus_delete'],
-  site_context: ['slimweb_auth_status', 'slimweb_sites_list', 'slimweb_site_select'],
+  site_context: ['slimweb_guides_get', 'slimweb_auth_status', 'slimweb_sites_list', 'slimweb_site_select'],
   basic_settings_read: ['slimweb_settings_get'],
   basic_settings_write: ['slimweb_settings_update'],
   contact_settings_read: ['slimweb_contact_settings_get'],

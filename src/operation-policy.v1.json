@@ -1219,6 +1219,10 @@
       "all": [
         "backend_ai_assistant"
       ]
+    },
+    "slimweb_guides_get": {
+      "any": [],
+      "all": []
     }
   },
   "actions": {

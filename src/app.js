@@ -1,3 +1,4 @@
+import { GUIDE_BOOTSTRAP_INSTRUCTIONS, GUIDE_TOOL, GUIDE_URI_PREFIX, operatingGuide, operatingGuideResources } from './guides.js';
 import {operationAllowed} from './operationPolicy.js';
 import {redactToolResult} from './resultSafety.js';
 import {createToolLimiter} from './toolLimiter.js';
@@ -7,7 +8,7 @@ import { MERCHANT_CAPABILITY_URI, MERCHANT_CAPABILITY_GUIDANCE } from './merchan
 import { handleEventMethod } from './events.js';
 const MERCHANT_CAPABILITY_GUIDE = readFileSync(new URL('./merchant-capabilities.md', import.meta.url), 'utf8');
 function serverInstructions(context) {
-  return [context.toolProfile.serverGuidelines ?? MCP_SERVER_GUIDELINES, MERCHANT_CAPABILITY_GUIDANCE,
+  return [GUIDE_BOOTSTRAP_INSTRUCTIONS, context.toolProfile.serverGuidelines ?? MCP_SERVER_GUIDELINES, MERCHANT_CAPABILITY_GUIDANCE,
     'When a tool returns confirmation_required, show the confirmation_url to the human. The same merchant must open it, review the fixed action and approve before you retry the unchanged operation. Never approve it yourself, including through browser automation; confirmed/buyer_agreed parameters cannot grant approval. For RATE_LIMIT_EXCEEDED, respect retry_after and do not loop or change identities to bypass limits.'
   ].join(' ');
 }
@@ -543,6 +544,7 @@ const MCP_PARITY_TOOLS = [
   }
 }));
 const MCP_TOOLS = [
+  GUIDE_TOOL,
   ...INVOICE_TOOLS,
   ...LINE_TOOLS,
   ...MCP_PARITY_TOOLS,
@@ -553,7 +555,7 @@ const MCP_TOOLS = [
   },
   {
     name: 'slimweb_sites_list',
-    description: 'List SlimWeb sites available to the authenticated account. Always call this first before any other SlimWeb MCP action.',
+    description: 'List SlimWeb sites available to the authenticated account. Call this before any site-scoped SlimWeb action; authenticated operating-guide reads do not require site selection.',
     inputSchema: EMPTY_INPUT_SCHEMA
   },
   {
@@ -2767,6 +2769,7 @@ function toolExceptionToMcpError(id, error) {
 }
 
 const BASE_TOOL_NAMES = new Set([
+  'slimweb_guides_get',
   'slimweb_auth_status',
   'slimweb_sites_list',
   'slimweb_site_select'
@@ -2904,6 +2907,10 @@ async function toolResultForCall(message, request, context) {
   }
 
   switch (name) {
+    case 'slimweb_guides_get':
+      try { return mcpResult(message.id ?? null, mcpJsonContent(operatingGuide(toolArgs(message)))); }
+      catch (error) { return mcpError(message.id ?? null, -32602, error.message); }
+
     case 'slimweb_auth_status':
       return mcpResult(message.id ?? null, mcpJsonContent({
         authenticated: true,
@@ -4399,6 +4406,7 @@ async function handleMcpMessage(message, request, context) {
     case 'resources/list':
       return mcpResult(id, {
         resources: [
+          ...operatingGuideResources(),
           {
             uri: MERCHANT_CAPABILITY_URI,
             name: 'SlimWeb merchant capability map and business-language guide',
@@ -4422,6 +4430,13 @@ async function handleMcpMessage(message, request, context) {
       const uri = String(message?.params?.uri ?? '');
       if (uri === MERCHANT_CAPABILITY_URI) {
         return mcpResult(id, { contents: [{ uri, mimeType: 'text/markdown', text: MERCHANT_CAPABILITY_GUIDE }] });
+      }
+      if (uri.startsWith(GUIDE_URI_PREFIX)) {
+        if (!request.slimwebVerifiedIdentity) return mcpError(id, -32001, 'Authentication required.', { reason: 'AUTH_REQUIRED' });
+        try {
+          const guide = operatingGuide({ topic: uri.slice(GUIDE_URI_PREFIX.length) });
+          return mcpResult(id, { contents: [{ uri, mimeType: guide.topic === 'index' ? 'application/json' : 'text/markdown', text: guide.content ?? JSON.stringify(guide), _meta: { guide_version: guide.guide_version, ...(guide.sha256 ? { sha256: guide.sha256 } : {}) } }] });
+        } catch (error) { return mcpError(id, -32602, error.message); }
       }
       if (![MEMBER_EMAIL_PREVIEW_WIDGET_URI, POSTER_PREVIEW_WIDGET_URI].includes(uri)) {
         return mcpError(id, -32602, `Unknown MCP resource: ${uri || 'undefined'}`);

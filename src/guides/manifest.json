@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "guide_version": "sha256:41e62bc272eebecd832363f25c6e3f13e6bf31dfb7ba4a9524871599bc57f672",
+  "topics": [
+    {
+      "topic": "capability-map",
+      "file": "capability-map.md",
+      "sha256": "41750046ce6510436ce9d31214c6c2c1e3bc0cb2c692f42cfebd8a4c0ada9dda",
+      "bytes": 49381
+    },
+    {
+      "topic": "catalog-navigation",
+      "file": "catalog-navigation.md",
+      "sha256": "6dfc9996d542658abc4375ecf94b57fcaadf4ce30f212dd63bceaebad75291c6",
+      "bytes": 3421
+    },
+    {
+      "topic": "commerce-settings",
+      "file": "commerce-settings.md",
+      "sha256": "191355fc8ce540a9686c4d44fa15b6c1ab5be97b3af4eb9761b736daccb46288",
+      "bytes": 9671
+    },
+    {
+      "topic": "design-rwd",
+      "file": "design-rwd.md",
+      "sha256": "238c3481846f9c7e5f629ff9dc73d6152912dfe9a543e2641fe48c352d31bc4b",
+      "bytes": 2963
+    },
+    {
+      "topic": "external-assets",
+      "file": "external-assets.md",
+      "sha256": "c82d2f33b89d2f0274b259dcca4677cdff1b7f9b000691cf8fd19039dc667dd9",
+      "bytes": 2223
+    },
+    {
+      "topic": "line-bot-setup",
+      "file": "line-bot-setup.md",
+      "sha256": "e07540d64ef575dee63d18f415995446aaaa54ba765fecdc7c6518876768cd24",
+      "bytes": 4299
+    },
+    {
+      "topic": "marketing-campaigns",
+      "file": "marketing-campaigns.md",
+      "sha256": "ab17cd0d4d2e9913d745395aa6e1ced8482c8ebb33cf28acd2de0171eabc6a95",
+      "bytes": 10775
+    },
+    {
+      "topic": "media-upload-flow",
+      "file": "media-upload-flow.md",
+      "sha256": "2a02b861401cf0a10a7e1f26f458da5bfb8258bb69df4460a226514619ea83c1",
+      "bytes": 2010
+    },
+    {
+      "topic": "overview",
+      "file": "overview.md",
+      "sha256": "0380c69fd2b0b5efb1dc8314004137412789ca0112988e4adf54eb5180bc492f",
+      "bytes": 17584
+    },
+    {
+      "topic": "theme-page-workflows",
+      "file": "theme-page-workflows.md",
+      "sha256": "ae695f18e086e16dac641ccd4908c539356959e8f86f7746223244166ffef7bd",
+      "bytes": 6532
+    },
+    {
+      "topic": "tool-composition",
+      "file": "tool-composition.md",
+      "sha256": "5b8d13c5a877c499465c1da705176d92b925b85b5f94b2e987eea6fbe365af6b",
+      "bytes": 5107
+    }
+  ]
+}

@@ -20,6 +20,7 @@ const BATCH1 = [
 ];
 
 const BATCH1_TOOLS = [
+  'slimweb_guides_get',
   'slimweb_auth_status',
   'slimweb_sites_list',
   'slimweb_site_select',
@@ -58,9 +59,10 @@ async function listTools(capabilities) {
   }
 }
 
-test('Phase 1 capabilities preserve five tools and name-only settings projection', async () => {
+test('Phase 1 capabilities preserve existing tools plus guidance and name-only settings projection', async () => {
   const tools = await listTools(PHASE1);
   assert.deepEqual(tools.map(({ name }) => name), [
+    'slimweb_guides_get',
     'slimweb_auth_status',
     'slimweb_sites_list',
     'slimweb_site_select',
@@ -71,7 +73,7 @@ test('Phase 1 capabilities preserve five tools and name-only settings projection
   assert.deepEqual(Object.keys(settings.inputSchema.properties), ['name', 'site_code']);
 });
 
-test('Batch 1 capabilities expose fifteen Core schemas in catalog order', async () => {
+test('Batch 1 capabilities expose sixteen Core schemas in catalog order', async () => {
   const tools = await listTools(BATCH1);
   assert.deepEqual(tools.map(({ name }) => name), BATCH1_TOOLS);
   const settings = tools.find(({ name }) => name === 'slimweb_settings_update');
