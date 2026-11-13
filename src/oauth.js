@@ -31,16 +31,22 @@ const redirect = (res, url) => {
   });
   res.end();
 };
-async function body(req) {
+const parsedBodies = new WeakMap();
+export async function readOAuthBody(req) {
+  if (parsedBodies.has(req)) return parsedBodies.get(req);
   let data = '';
   for await (const chunk of req) {
     data += chunk;
     if (Buffer.byteLength(data) > 16384) throw new Error('Request too large');
   }
-  return String(req.headers['content-type'] ?? '').includes('application/json')
+  const parsed = String(req.headers['content-type'] ?? '').includes('application/json')
     ? JSON.parse(data)
     : Object.fromEntries(new URLSearchParams(data));
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Invalid OAuth request body');
+  parsedBodies.set(req, parsed);
+  return parsed;
 }
+const body = readOAuthBody;
 function validRedirect(value) {
   try {
     const u = new URL(value);

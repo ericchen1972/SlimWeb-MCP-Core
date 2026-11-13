@@ -1,7 +1,7 @@
 import {operationAllowed} from './operationPolicy.js';
 import {redactToolResult} from './resultSafety.js';
 import {createToolLimiter} from './toolLimiter.js';
-import { handleOAuth } from './oauth.js';
+import { handleOAuth, readOAuthBody as readCachedOAuthBody } from './oauth.js';
 import { readFileSync } from 'node:fs';
 import { MERCHANT_CAPABILITY_URI, MERCHANT_CAPABILITY_GUIDANCE } from './merchantCapabilities.js';
 import { handleEventMethod } from './events.js';
@@ -4896,6 +4896,14 @@ export function createRequestHandler(options = {}) {
   return async function requestHandler(request, response) {
     const url = new URL(request.url, 'http://localhost');
     try {
+      // RFC 8707 token requests carry resource in the form body. Parse it
+      // before resolving tenant context; handleOAuth reuses the bounded body.
+      if (request.method === 'POST' && ['/oauth/token', '/oauth/revoke'].includes(url.pathname)) {
+        const body = await readCachedOAuthBody(request);
+        if (!url.searchParams.has('resource') && typeof body.resource === 'string') {
+          url.searchParams.set('resource', body.resource);
+        }
+      }
       request.slimwebResourceContext = context.resourceContext.parse(url);
     } catch (error) {
       jsonResponse(response, error.status ?? 400, {
